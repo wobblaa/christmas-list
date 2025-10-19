@@ -642,7 +642,7 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
 
     function handleDragStart(e) {
       draggedElement = e.target;
-      e.target.style.opacity = '0.5';
+      e.target.classList.add('dragging');
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text/html', e.target.outerHTML);
       
@@ -681,7 +681,7 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
     }
 
     function handleDragEnd(e) {
-      e.target.style.opacity = '';
+      e.target.classList.remove('dragging');
       
       // Update order in database
       const newOrder = Array.from(document.querySelectorAll('.draggable-gift')).map((item, index) => ({
@@ -738,8 +738,7 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
       // Start dragging if moved more than 10px
       if (Math.abs(deltaY) > 10 && !isDragging) {
         isDragging = true;
-        touchStartElement.style.opacity = '0.5';
-        touchStartElement.style.transform = 'rotate(2deg)';
+        touchStartElement.classList.add('dragging');
         e.preventDefault();
       }
       
@@ -760,8 +759,7 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
       if (!touchStartElement) return;
       
       if (isDragging) {
-        touchStartElement.style.opacity = '';
-        touchStartElement.style.transform = '';
+        touchStartElement.classList.remove('dragging');
         
         // Update order in database
         const newOrder = Array.from(document.querySelectorAll('.draggable-gift')).map((item, index) => ({
@@ -1566,8 +1564,10 @@ body {
     }
 
     .draggable-gift.dragging {
-      opacity: 0.5;
+      opacity: 0.8;
       transform: rotate(2deg);
+      border: 2px solid white;
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
     }
 
     .drag-handle {
