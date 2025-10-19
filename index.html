@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Family Gift List!</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+    import {
+      getFirestore, collection, query, where, getDocs, addDoc, setDoc, doc, getDoc,
+      onSnapshot, updateDoc, runTransaction, orderBy, limit
+    } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+    import {
+      getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+      onAuthStateChanged, signOut, sendPasswordResetEmail
+    } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+
+     // --- Firebase config (yours) ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyDOI66T_NSHXgLYg3uzp4cLRnDkQX2_67E",
+      authDomain: "christmas-2025.firebaseapp.com",
+      projectId: "christmas-2025",
+      storageBucket: "christmas-2025.appspot.com",
+      messagingSenderId: "924053864667",
+      appId: "1:924053864667:web:de8c7551b71013c4c34cfe"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // ===== DOMAIN COLORS DATA =====
+    const DOMAIN_COLORS = {
+      'amazon': '#ff9900',
+      'walmart': '#0071dc',
+      'target': '#cc0000',
+      'ebay': '#e53238',
+      'etsy': '#d5641c',
+      'bestbuy': '#003b64',
+      'homedepot': '#f96302',
+      'lowes': '#004990',
+      'costco': '#e31837',
+      'macy': '#d32f2f',
+      'nordstrom': '#000000',
+      'zappos': '#ff6600',
+      'overstock': '#c7202b',
+      'wayfair': '#3b82f6',
+      'ikea': '#0058a3',
+      'apple': '#007aff',
+      'google': '#4285f4',
+      'microsoft': '#00bcf2',
+      'dell': '#007db8',
+      'hp': '#0096d6',
+      'lenovo': '#e2231a',
+      'samsung': '#1428a0',
+      'sony': '#003791',
+      'lg': '#a50034',
+      'panasonic': '#0f4c75',
+      'canon': '#bc002d',
+      'nikon': '#f8b500',
+      'adobe': '#ff0000',
+      'netflix': '#e50914',
+      'spotify': '#1db954',
+      'youtube': '#ff0000',
+      'facebook': '#1877f2',
+      'instagram': '#e4405f',
+      'twitter': '#1da1f2',
+      'linkedin': '#0077b5',
+      'pinterest': '#bd081c',
+      'reddit': '#ff4500',
+      'github': '#333333',
+      'stackoverflow': '#f48024',
+      'medium': '#00ab6c',
+      'wordpress': '#21759b',
+      'shopify': '#96bf48',
+      'squarespace': '#000000',
+      'wix': '#0c6efc',
+      'webflow': '#4353ff',
+      'figma': '#f24e1e',
+      'notion': '#000000',
+      'slack': '#4a154b',
+      'discord': '#5865f2',
+      'zoom': '#2d8cff',
+      'dropbox': '#0061ff',
+      'google-drive': '#4285f4',
+      'onedrive': '#0078d4',
+      'icloud': '#007aff',
+      'aws': '#ff9900',
+      'azure': '#0078d4',
+      'heroku': '#430098',
+      'vercel': '#000000',
+      'netlify': '#00c7b7',
+      'cloudflare': '#f38020',
+      'stripe': '#635bff',
+      'paypal': '#0070ba',
+      'venmo': '#3d95ce',
+      'cashapp': '#00d632',
+      'zelle': '#6c1f7a',
+      'chase': '#0066b2',
+      'bankofamerica': '#e31837',
+      'wellsfargo': '#d71e2b',
+      'citibank': '#056dae',
+      'capitalone': '#004977',
+      'discover': '#ff6000',
+      'amex': '#006fcf',
+      'visa': '#1a1f71',
+      'mastercard': '#eb001b',
+      'uber': '#000000',
+      'lyft': '#ff00bf',
+      'airbnb': '#ff5a5f',
+      'booking': '#003580',
+      'expedia': '#ff6b35',
+      'priceline': '#1885be',
+      'kayak': '#ff6600',
+      'hotels': '#d32f2f',
+      'marriott': '#d32f2f',
+      'hilton': '#003580',
+      'hyatt': '#6c1f7a',
+      'ihg': '#1e3a8a',
+      'accor': '#003580',
+      'choice': '#ff6600',
+      'wyndham': '#003580',
+      'radisson': '#003580',
+      'bestwestern': '#003580',
+      'holidayinn': '#003580',
+      'ramada': '#003580',
+      'comfort': '#003580',
+      'quality': '#003580',
+      'sleep': '#003580',
+      'hampton': '#003580',
+      'candlewood': '#003580',
+      'staybridge': '#003580',
+      'homewood': '#003580',
+      'embassy': '#003580',
+      'doubletree': '#003580',
+      'garden': '#003580',
+      'tru': '#003580',
+      'avid': '#003580',
+      'even': '#003580',
+      'aloft': '#003580',
+      'element': '#003580',
+      'four': '#003580',
+      'points': '#003580',
+      'timeshare': '#003580',
+      'vacation': '#003580',
+      'rental': '#003580',
+      'vrbo': '#003580',
+      'homeaway': '#003580',
+      'tripadvisor': '#00af87',
+      'yelp': '#ff1a1a',
+      'foursquare': '#f94877',
+      'google-maps': '#4285f4',
+      'waze': '#33ccff',
+      'mapquest': '#ff6600',
+      'bing': '#0078d4',
+      'duckduckgo': '#de5833',
+      'yahoo': '#6001d2',
+      'aol': '#ff6600',
+      'outlook': '#0078d4',
+      'gmail': '#ea4335',
+      'yahoo-mail': '#6001d2',
+      'icloud-mail': '#007aff',
+      'protonmail': '#8b89cc',
+      'tutanota': '#840010',
+      'fastmail': '#243782',
+      'zoho': '#ff6600',
+      'mailchimp': '#ffe01b',
+      'constant': '#003580',
+      'aweber': '#ff6600',
+      'getresponse': '#ff6600',
+      'convertkit': '#fb6970',
+      'activecampaign': '#0066cc',
+      'drip': '#ff6600',
+      'klaviyo': '#ff6600',
+      'sendinblue': '#0092ff',
+      'mailgun': '#ff6600',
+      'sendgrid': '#1a82e2',
+      'twilio': '#f22f46',
+      'stripe': '#635bff',
+      'square': '#0070ba',
+      'paypal': '#0070ba',
+      'venmo': '#3d95ce',
+      'cashapp': '#00d632',
+      'zelle': '#6c1f7a',
+      'apple-pay': '#007aff',
+      'google-pay': '#4285f4',
+      'samsung-pay': '#1428a0',
+      'link': '#6c757d'
+    };
+
+    // ===== GLOBAL VARIABLES =====
+    // DOM Elements (initialized after DOMContentLoaded) - cached for performance
+    let authStatusElement, authStatusTextElement, authFormElement, firstNameInput, emailInput, passwordInput,
+        signInButton, signUpButton, signOutButton, tabSignIn, tabSignUp,
+        addGiftForm, giftNameInput, giftDescriptionInput, giftUrlInput, giftListDisplayElement,
+        otherUsersListElement, viewOtherUserGiftsContainer, forgotPasswordLink;
+
+    // Session state
+    let currentUserUid = null;
+
+    // Firebase real-time subscription cleanup functions
+    let ownerGiftsUnsub = null;
+    let otherUserGiftsUnsub = null;
+
+    // In-memory cache for gift ordering (owner's list only)
+    let ownerGiftsCache = []; // current owner's ordered list (orderIndex ASC)
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Elements
+      authStatusElement = document.getElementById('authStatus');
+      authStatusTextElement = document.getElementById('authStatusText');
+      authFormElement = document.getElementById('authForm');
+      firstNameInput = document.getElementById('firstNameInput');
+      emailInput = document.getElementById('emailInput');
+      passwordInput = document.getElementById('passwordInput');
+      signInButton = document.getElementById('signInButton');
+      signUpButton = document.getElementById('signUpButton');
+      signOutButton = document.getElementById('signOutButton');
+      addGiftForm = document.getElementById('addGiftForm');
+      giftNameInput = document.getElementById('giftNameInput');
+      giftDescriptionInput = document.getElementById('giftDescriptionInput');
+      giftUrlInput = document.getElementById('giftUrlInput');
+      giftListDisplayElement = document.getElementById('giftListDisplay');
+      otherUsersListElement = document.getElementById('otherUsersList');
+      viewOtherUserGiftsContainer = document.getElementById('viewOtherUserGiftsContainer');
+      forgotPasswordLink = document.getElementById('forgotPasswordLink');
+
+      // Auth tabs
+      tabSignIn = document.getElementById('tabSignIn');
+      tabSignUp = document.getElementById('tabSignUp');
+
+      // Events
+      tabSignIn?.addEventListener('click', () => { authMode = 'signin'; updateAuthUI(); });
+      tabSignUp?.addEventListener('click', () => { authMode = 'signup'; updateAuthUI(); });
+
+      signInButton.addEventListener('click', handleSignIn);
+      signUpButton.addEventListener('click', handleSignUp);
+      signOutButton.addEventListener('click', handleSignOut);
+      addGiftForm.addEventListener('submit', handleAddGift);
+      forgotPasswordLink.addEventListener('click', handleForgotPassword);
+
+      // Default to Sign In view
+      updateAuthUI();
+
+      // Auth state
+      onAuthStateChanged(auth, async (user) => {
+        try {
+          if (user) {
+            currentUserUid = user.uid;
+
+            // Fetch user profile from Firestore to show displayName
+            const userRef = doc(db, 'users', user.uid);
+            const snap = await getDoc(userRef);
+            const data = snap.exists() ? snap.data() : {};
+            let name = data.username || '';
+if (!name) {
+  try {
+    const qMap = query(collection(db, 'usernames'), where('uid', '==', user.uid), limit(1));
+    const mapSnap = await getDocs(qMap);
+    if (!mapSnap.empty) {
+      const m = mapSnap.docs[0].data();
+      if (m && m.username) name = m.username;
+    }
+  } catch (e) {
+    console.warn('banner username fallback failed:', e);
+  }
+}
+if (!name) name = user.email.split('@')[0];
+
+authStatusTextElement.textContent = `Signed in as: ${name}`;
+
+
+            authFormElement.style.display = 'none';
+            signOutButton.style.display = 'block';
+            addGiftForm.style.display = 'block';
+            giftListDisplayElement.style.display = 'block';
+            otherUsersListElement.style.display = 'block';
+
+            await createUserProfile(user);
+
+            // Attach live owner list & other users list
+            displayUserGifts(currentUserUid);
+            await displayOtherUsers(currentUserUid);
+          } else {
+            currentUserUid = null;
+            authStatusTextElement.textContent = 'No user signed in.';
+            authFormElement.style.display = 'block';
+            signOutButton.style.display = 'none';
+            addGiftForm.style.display = 'none';
+            giftListDisplayElement.style.display = 'none';
+            otherUsersListElement.style.display = 'none';
+            viewOtherUserGiftsContainer.style.display = 'none';
+            giftListDisplayElement.innerHTML = "<h3>Please sign in to view and add your gifts.</h3>";
+            otherUsersListElement.innerHTML = "";
+            viewOtherUserGiftsContainer.innerHTML = "";
+
+            // Tear down live listeners when signed out
+            if (ownerGiftsUnsub) { ownerGiftsUnsub(); ownerGiftsUnsub = null; }
+            if (otherUserGiftsUnsub) { otherUserGiftsUnsub(); otherUserGiftsUnsub = null; }
+          }
+        } catch (e) {
+          showError(e.message || 'Authentication error', false);
+        }
+      });
+
+      // Run a couple of self-tests in dev console
+      _runSelfTests();
+
+      // Create Christmas header effect
+      createChristmasHeader();
+    });
+
+    // ===== AUTHENTICATION HANDLERS =====
+    async function handleSignUp() {
+      try {
+        const nameRaw = (firstNameInput?.value || '').trim();
+        const email = emailInput.value.trim();
+        const pass = passwordInput.value;
+        if (!nameRaw) return alert('Please enter your first name.');
+        if (!email) return alert('Please enter your email.');
+        if (!pass) return alert('Please enter a password.');
+
+        const usernameLower = nameRaw.toLowerCase();
+        const unameRef = doc(db, 'usernames', usernameLower);
+
+        // 0) Ensure name is not already taken
+        const unameSnap = await getDoc(unameRef);
+        if (unameSnap.exists()) {
+          alert('That first name is already taken. Please choose another.');
+          return;
+        }
+
+        // 1) Create Auth user
+        const { user } = await createUserWithEmailAndPassword(auth, email, pass);
+
+        // 2) Write user profile (won't overwrite displayName later)
+        await setDoc(doc(db, 'users', user.uid), {
+          uid: user.uid,
+          email: user.email,
+          username: nameRaw,
+          usernameLower: usernameLower
+        }, { merge: true });
+
+        // 3) Reserve username mapping
+        try {
+          await setDoc(unameRef, { uid: user.uid, email: user.email, username: nameRaw, usernameLower });
+        } catch (e) {
+          console.error('Failed to reserve username mapping', e);
+          alert('Signed up, but could not reserve your first name for login. Please contact the admin.');
+        }
+      } catch (error) {
+        showError(`Sign up failed: ${error.message}`, false);
+      }
+    }
+
+    async function handleSignIn() {
+      try {
+        const firstName = (firstNameInput?.value || '').trim();
+        const pass = passwordInput.value;
+        if (!firstName) return alert('Please enter your first name.');
+        if (!pass) return alert('Please enter your password.');
+
+        const lower = firstName.toLowerCase();
+        const mapSnap = await getDoc(doc(db, 'usernames', lower));
+        if (!mapSnap.exists()) {
+          alert('No account found for that first name.');
+          return;
+        }
+        const { email } = mapSnap.data();
+        await signInWithEmailAndPassword(auth, email, pass);
+      } catch (error) {
+        showError(`Sign in failed: ${error.message}`, false);
+      }
+    }
+
+    async function handleSignOut() {
+      try { await signOut(auth); } catch (error) { console.error(error); }
+    }
+
+    async function handleForgotPassword() {
+      try {
+        const firstName = (firstNameInput?.value || '').trim();
+        if (!firstName) return alert('Enter your first name to reset your password.');
+        const lower = firstName.toLowerCase();
+        const mapSnap = await getDoc(doc(db, 'usernames', lower));
+        if (!mapSnap.exists()) return alert('No account found for that first name.');
+        const { email } = mapSnap.data();
+        await sendPasswordResetEmail(auth, email);
+        alert(`Password reset email sent to ${email}!`);
+      } catch (error) {
+        showError(`Password reset failed: ${error.message}`);
+      }
+    }
+
+    async function createUserProfile(user) {
+      const userRef = doc(db, 'users', user.uid);
+      try {
+        const snap = await getDoc(userRef);
+        if (snap.exists()) {
+          await setDoc(userRef, {
+  email: user.email,
+  uid: user.uid
+}, { merge: true });
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // ===== URL UTILITY FUNCTIONS =====
+    function sanitizeUrl(raw) {
+      const url = (raw || "").trim();
+      if (!url) return "";
+      if (!/^https?:\/\//i.test(url)) return "https://" + url; // add protocol if missing
+      return url;
+    }
+    function displayUrlText(u) {
+      try {
+        const { host, pathname } = new URL(u);
+        const short = (host + pathname).replace(/\/$/, "");
+        return short.length > 40 ? short.slice(0, 37) + "…" : short;
+      } catch { return u; }
+    }
+    function getDomainFromUrl(url) {
+      try {
+        const urlObj = new URL(url);
+        const hostname = urlObj.hostname.toLowerCase();
+        
+        // Remove www. prefix if present
+        const domain = hostname.replace(/^www\./, '');
+        
+        // Extract just the main domain (before first dot)
+        const mainDomain = domain.split('.')[0];
+        
+        return mainDomain;
+      } catch {
+        return 'link';
+      }
+    }
+
+    function renderGiftLink(u) {
+      const domain = getDomainFromUrl(u);
+      const color = DOMAIN_COLORS[domain] || '#6c757d';
+      const displayName = domain.charAt(0).toUpperCase() + domain.slice(1);
+      
+      return `<a class="gift-link gift-link-badge" href="${u}" target="_blank" rel="noopener noreferrer" style="background-color: ${color}; color: white; border: none; font-weight: 500;">${displayName}</a>`;
+    }
+
+    // ===== GIFT ORDERING UTILITIES =====
+    async function getNextOrderIndexForOwner(ownerUid) {
+      // Uses composite index: listOwnerId ASC, orderIndex DESC
+      const qTop = query(
+        collection(db, 'giftItems'),
+        where('listOwnerId', '==', ownerUid),
+        orderBy('orderIndex', 'desc'),
+        limit(1)
+      );
+      const snap = await getDocs(qTop);
+      if (snap.empty) return 1;
+      const top = snap.docs[0].data();
+      return (typeof top.orderIndex === 'number' ? top.orderIndex : 0) + 1;
+    }
+
+    // ===== GIFT MANAGEMENT FUNCTIONS =====
+    async function handleAddGift(e) {
+      e.preventDefault();
+      if (!currentUserUid) return alert("Sign in first.");
+      const name = giftNameInput.value.trim();
+      const description = (giftDescriptionInput?.value || '').trim();
+      const url = sanitizeUrl(giftUrlInput?.value || '');
+      if (!name) return alert('Please enter a gift name.');
+
+      try {
+        const orderIndex = await getNextOrderIndexForOwner(currentUserUid);
+        await addDoc(collection(db, 'giftItems'), {
+          name,
+          description,
+          url: url || null,
+          listOwnerId: currentUserUid,
+          isPurchased: false,
+          purchasedByUid: null,
+          hiddenForOwner: false,
+          orderIndex,
+          addedTimestamp: new Date()
+        });
+        giftNameInput.value = '';
+        if (giftDescriptionInput) giftDescriptionInput.value = '';
+        if (giftUrlInput) giftUrlInput.value = '';
+      } catch (error) {
+        showError(`Failed to add gift: ${error.message}`);
+      }
+    }
+
+    // ===== GIFT LIST DISPLAY FUNCTIONS =====
+    function displayUserGifts(userUid) {
+      if (ownerGiftsUnsub) ownerGiftsUnsub();
+
+      giftListDisplayElement.innerHTML = "<h3>Loading your gift list...</h3>";
+
+      const qRef = query(collection(db, 'giftItems'), where('listOwnerId', '==', userUid));
+      ownerGiftsUnsub = onSnapshot(
+        qRef,
+        (snap) => {
+          const gifts = snap.docs
+            .map(d => ({ id: d.id, ...d.data(), orderIndex: (d.data().orderIndex ?? 0) }))
+            .filter(g => !g.hiddenForOwner);
+
+          gifts.sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)); // owner order
+          ownerGiftsCache = gifts.slice();
+
+          if (gifts.length === 0) {
+            giftListDisplayElement.innerHTML = "<h3>No gifts found for you! Start adding some.</h3>";
+            return;
+          }
+
+          let html = `
+            <div style="display:flex; align-items:center; gap:8px; justify-content:space-between;">
+              <h3 style="margin:0;">Your Gift List</h3>
+            </div>
+            <ul>`;
+          for (const g of gifts) {
+            const linkHtml = g.url ? ` <span>${renderGiftLink(g.url)}</span>` : '';
+            html += `
+              <li>
+                <div>
+                  <strong>${g.name}</strong> ${g.description ? `- ${g.description}` : ''}
+                  ${linkHtml}
+                </div>
+                <div style="margin-top:6px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                  <button class="edit-gift-btn" data-id="${g.id}" data-name="${escapeAttr(g.name)}" data-desc="${escapeAttr(g.description || '')}" data-url="${escapeAttr(g.url || '')}">Edit</button>
+                  <button class="delete-gift-btn" data-id="${g.id}">Remove</button>
+                  <div class="move-buttons-container">
+                    <button class="move-up-btn" data-id="${g.id}" title="Move Up">▲</button>
+                    <button class="move-down-btn" data-id="${g.id}" title="Move Down">▼</button>
+                  </div>
+                </div>
+              </li>
+            `;
+          }
+          html += "</ul>";
+          giftListDisplayElement.innerHTML = html;
+
+          // Wire owner edit/remove buttons
+          document.querySelectorAll('.edit-gift-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              const id = e.currentTarget.dataset.id;
+              const curName = e.currentTarget.dataset.name || '';
+              const curDesc = e.currentTarget.dataset.desc || '';
+              const curUrl = e.currentTarget.dataset.url || '';
+              await editGift(id, curName, curDesc, curUrl);
+            });
+          });
+
+          document.querySelectorAll('.delete-gift-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              const id = e.currentTarget.dataset.id;
+              if (confirm('Remove this gift from your list?')) {
+                await deleteGift(id);
+              }
+            });
+          });
+
+          // Wire move up/down (swap orderIndex atomically)
+          document.querySelectorAll('.move-up-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              const id = e.currentTarget.dataset.id;
+              await moveGift(id, -1);
+            });
+          });
+          document.querySelectorAll('.move-down-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              const id = e.currentTarget.dataset.id;
+              await moveGift(id, +1);
+            });
+          });
+        },
+        (error) => {
+          console.error(error);
+          giftListDisplayElement.innerHTML = `<h3>Failed to load gift list: ${error.message}</h3>`;
+        }
+      );
+    }
+
+    async function moveGift(giftId, delta) {
+      if (!currentUserUid) return;
+      // Find current and neighbor in cache (already sorted by orderIndex ASC)
+      const idx = ownerGiftsCache.findIndex(g => g.id === giftId);
+      if (idx === -1) return;
+      const neighborIdx = idx + delta;
+      if (neighborIdx < 0 || neighborIdx >= ownerGiftsCache.length) return; // no-op at edges
+
+      const cur = ownerGiftsCache[idx];
+      const neighbor = ownerGiftsCache[neighborIdx];
+      const curRef = doc(db, 'giftItems', cur.id);
+      const neighborRef = doc(db, 'giftItems', neighbor.id);
+
+      try {
+        await runTransaction(db, async (tx) => {
+          const curSnap = await tx.get(curRef);
+          const neighSnap = await tx.get(neighborRef);
+          const curOrder = (curSnap.data().orderIndex ?? 0);
+          const neighOrder = (neighSnap.data().orderIndex ?? 0);
+
+          // only allow owner to reorder their own
+          if (curSnap.data().listOwnerId !== currentUserUid || neighSnap.data().listOwnerId !== currentUserUid) {
+            throw new Error('Not your gift to reorder.');
+          }
+
+          tx.update(curRef, { orderIndex: neighOrder });
+          tx.update(neighborRef, { orderIndex: curOrder });
+        });
+      } catch (err) {
+        showError(`Failed to move item: ${err.message}`);
+      }
+    }
+
+    // Helper: resolve label from /users.username, else /usernames (by uid), else email prefix
+    async function resolveLabelForUser(u) {
+      if (u.username && u.username.trim()) return u.username;
+      try {
+        const qMap = query(
+          collection(db, 'usernames'),
+          where('uid', '==', u.uid),
+          limit(1)
+        );
+        const snap = await getDocs(qMap);
+        if (!snap.empty) {
+          const data = snap.docs[0].data();
+          if (data && data.username) return data.username;
+        }
+      } catch (e) {
+        console.warn('resolveLabelForUser fallback failed:', e);
+      }
+      return (u.email || '').split('@')[0] || u.uid;
+    }
+
+    // ===== OTHER USERS DISPLAY FUNCTIONS =====
+    async function displayOtherUsers(currentUid) {
+      otherUsersListElement.innerHTML = "<h3>Loading other family members...</h3>";
+      try {
+        const usersRef = collection(db, 'users');
+        const qRef = query(usersRef, where('uid', '!=', currentUid));
+        const snap = await getDocs(qRef);
+
+        const rawUsers = snap.docs.map(d => d.data());
+
+        // Resolve labels using username -> /usernames -> email prefix
+        const usersWithLabels = await Promise.all(
+          rawUsers.map(async (u) => ({ ...u, _label: await resolveLabelForUser(u) }))
+        );
+
+        usersWithLabels.sort((a, b) => a._label.toLowerCase().localeCompare(b._label.toLowerCase()));
+
+        if (usersWithLabels.length === 0) {
+          otherUsersListElement.innerHTML = '<p>No other family members found yet.</p>';
+          return;
+        }
+
+        let html = "<h3>View Other Family Members' Lists:</h3><ul>";
+        for (const u of usersWithLabels) {
+          html += `<li><button class="view-user-list-btn" data-uid="${u.uid}" data-name="${u._label}">${u._label}</button></li>`;
+        }
+        html += '</ul>';
+        otherUsersListElement.innerHTML = html;
+
+        document.querySelectorAll('.view-user-list-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const targetUid = e.currentTarget.dataset.uid;
+            const targetName = e.currentTarget.dataset.name;
+            displayOtherUserGifts(targetUid, targetName);
+          });
+        });
+      } catch (error) {
+        console.error(error);
+        otherUsersListElement.innerHTML = `<h3>Failed to load family members: ${error.message}</h3>`;
+      }
+    }
+
+    // ===== OTHER USER'S GIFT LIST VIEW =====
+    function displayOtherUserGifts(targetUid, targetLabel) {
+      if (otherUserGiftsUnsub) otherUserGiftsUnsub();
+
+      viewOtherUserGiftsContainer.style.display = 'block';
+      viewOtherUserGiftsContainer.innerHTML = `<h3>Loading ${targetLabel}'s gifts...</h3>`;
+
+      const baseCol = collection(db, 'giftItems');
+
+      // 1) Unpurchased & visible gifts for that owner
+      const qUnpurchasedVisible = query(
+        baseCol,
+        where('listOwnerId', '==', targetUid),
+        where('isPurchased', '==', false),
+        where('hiddenForOwner', '==', false)
+      );
+
+      // 2) Items purchased BY ME for that owner
+      const qPurchasedByMe = query(
+        baseCol,
+        where('listOwnerId', '==', targetUid),
+        where('isPurchased', '==', true),
+        where('purchasedByUid', '==', currentUserUid)
+      );
+
+      let unpurchased = [];
+      let purchasedByMe = [];
+
+      const render = () => {
+        const map = new Map();
+        for (const d of unpurchased) map.set(d.id, d);
+        for (const d of purchasedByMe) map.set(d.id, d);
+        const visible = Array.from(map.values());
+
+        // Sort by priority (owner's order = orderIndex ASC)
+        visible.sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+
+        if (visible.length === 0) {
+          viewOtherUserGiftsContainer.innerHTML = `<h3>No available gifts for ${targetLabel}!</h3>`;
+          return;
+        }
+
+        let html = `
+          <div style="display:flex; align-items:center; gap:8px; justify-content:space-between;">
+            <h3 style="margin:0;">${targetLabel}'s Gift List</h3>
+          </div>
+          <ul>`;
+        for (const g of visible) {
+          const linkHtml = g.url ? ` <span>${renderGiftLink(g.url)}</span>` : '';
+          let btn = '';
+          if (!g.isPurchased) {
+            btn = `<button class="toggle-purchased-btn mark" data-gift-id="${g.id}" data-target-uid="${targetUid}" data-target-label="${targetLabel}" data-is-purchased="false">Mark Purchased</button>`;
+          } else if (g.purchasedByUid === currentUserUid) {
+            btn = `<button class="toggle-purchased-btn unmark" data-gift-id="${g.id}" data-target-uid="${targetUid}" data-target-label="${targetLabel}" data-is-purchased="true">Unmark Purchased</button>`;
+          }
+          const hasDescription = g.description && g.description.trim();
+          const descriptionId = `desc-${g.id}`;
+          
+          html += `
+            <li style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding-left: 0;">
+              <div style="flex: 1; min-width: 0;">
+                <div>
+                  <strong>${g.name}</strong>
+                  ${linkHtml}
+                </div>
+                ${hasDescription ? `
+                  <div class="description-link" onclick="toggleGiftDescription('${descriptionId}')">
+                    <span class="desc-toggle-text">Description</span>
+                    <span class="desc-toggle-icon">▼</span>
+                  </div>
+                  <div id="${descriptionId}" class="gift-description" style="display: none;">
+                    ${g.description}
+                  </div>
+                ` : '<div style="height: 20px;"></div>'}
+              </div>
+              <div style="flex-shrink: 0;">
+                ${btn}
+              </div>
+            </li>`;
+        }
+        html += '</ul>';
+        viewOtherUserGiftsContainer.innerHTML = html;
+
+
+        document.querySelectorAll('.toggle-purchased-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const giftId = e.currentTarget.dataset.giftId;
+            const ownerLabel = e.currentTarget.dataset.targetLabel;
+            const isPurchased = e.currentTarget.dataset.isPurchased === 'true';
+            if (confirm(`Are you sure you want to ${isPurchased ? 'unmark' : 'mark'} this gift as purchased for ${ownerLabel}?`)) {
+              await toggleGiftPurchasedStatus(giftId);
+            }
+          });
+        });
+      };
+
+      const unsub1 = onSnapshot(qUnpurchasedVisible, (snap) => {
+        unpurchased = snap.docs.map(d => ({ id: d.id, ...d.data(), orderIndex: (d.data().orderIndex ?? 0) }));
+        render();
+      });
+
+      const unsub2 = onSnapshot(qPurchasedByMe, (snap) => {
+        purchasedByMe = snap.docs.map(d => ({ id: d.id, ...d.data(), orderIndex: (d.data().orderIndex ?? 0) }));
+        render();
+      });
+
+      otherUserGiftsUnsub = () => { unsub1(); unsub2(); };
+    }
+
+    // ===== GIFT PURCHASE STATUS FUNCTIONS =====
+    async function toggleGiftPurchasedStatus(giftId) {
+      try {
+        const giftRef = doc(db, 'giftItems', giftId);
+        // Read to decide direction
+        await runTransaction(db, async (tx) => {
+          const snap = await tx.get(giftRef);
+          const data = snap.data();
+          const me = currentUserUid;
+          if (!data.isPurchased) {
+            tx.update(giftRef, { isPurchased: true, purchasedByUid: me });
+          } else if (data.purchasedByUid === me) {
+            tx.update(giftRef, { isPurchased: false, purchasedByUid: null });
+          } else {
+            throw new Error('Already claimed by someone else.');
+          }
+        });
+      } catch (error) {
+        showError(`Failed to update purchase status: ${error.message}`);
+      }
+    }
+
+    // ===== GIFT EDIT/DELETE FUNCTIONS =====
+    async function editGift(giftId, currentName, currentDesc, currentUrl) {
+      const newName = prompt('Edit gift name:', currentName) ?? currentName;
+      if (!newName.trim()) return alert('Gift name cannot be empty.');
+      const newDesc = prompt('Edit description (optional):', currentDesc ?? '') ?? currentDesc ?? '';
+      const newUrlRaw = prompt('Edit URL (optional):', currentUrl ?? '') ?? currentUrl ?? '';
+      const newUrl = sanitizeUrl(newUrlRaw);
+      try {
+        const giftRef = doc(db, 'giftItems', giftId);
+        await updateDoc(giftRef, { name: newName.trim(), description: newDesc.trim(), url: (newUrl || null) });
+      } catch (err) {
+        showError(`Failed to update gift: ${err.message}`);
+      }
+    }
+
+    async function deleteGift(giftId) {
+      try {
+        const giftRef = doc(db, 'giftItems', giftId);
+        await updateDoc(giftRef, { hiddenForOwner: true });
+      } catch (err) {
+        showError(`Failed to remove gift: ${err.message}`);
+      }
+    }
+
+    // ===== UTILITY FUNCTIONS =====
+    function escapeAttr(str) {
+      return String(str).replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+    }
+
+    // Standardized error handling
+    function showError(message, isAlert = true) {
+      console.error(message);
+      if (isAlert) {
+        alert(message);
+      } else if (authStatusTextElement) {
+        authStatusTextElement.textContent = `Error: ${message}`;
+      }
+    }
+
+    function showSuccess(message) {
+      console.log(message);
+      if (authStatusTextElement) {
+        authStatusTextElement.textContent = message;
+      }
+    }
+
+    // Performance optimization: Debounce function for rapid user interactions
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
+    // Performance optimization: Throttle function for scroll/resize events
+    function throttle(func, limit) {
+      let inThrottle;
+      return function() {
+        const args = arguments;
+        const context = this;
+        if (!inThrottle) {
+          func.apply(context, args);
+          inThrottle = true;
+          setTimeout(() => inThrottle = false, limit);
+        }
+      };
+    }
+
+    // ===== AUTH UI TOGGLE FUNCTIONS =====
+    let authMode = 'signin'; // 'signin' | 'signup'
+    function updateAuthUI() {
+      if (tabSignIn && tabSignUp) {
+        tabSignIn.classList.toggle('active', authMode === 'signin');
+        tabSignUp.classList.toggle('active', authMode === 'signup');
+      }
+      if (emailInput) emailInput.style.display = (authMode === 'signup' ? 'block' : 'none');
+      if (signInButton) signInButton.style.display = (authMode === 'signin' ? 'inline-block' : 'none');
+      if (signUpButton) signUpButton.style.display = (authMode === 'signup' ? 'inline-block' : 'none');
+      if (firstNameInput) firstNameInput.placeholder = (authMode === 'signin') ? 'First name (to log in)' : 'First name (display & login)';
+    }
+
+    // ===== CHRISTMAS HEADER EFFECT =====
+    function createChristmasHeader() {
+      const header = document.getElementById('christmasHeader');
+      if (!header) return;
+      
+      const text = header.textContent;
+      header.innerHTML = '';
+      
+      for (let i = 0; i < text.length; i++) {
+        const span = document.createElement('span');
+        span.textContent = text[i];
+        span.style.color = i % 2 === 0 ? '#dc3545' : '#28a745'; // Red and green alternating
+        header.appendChild(span);
+      }
+    }
+
+    // ===== GIFT DESCRIPTION TOGGLE =====
+    window.toggleGiftDescription = function(descriptionId) {
+      console.log('Toggling description for:', descriptionId);
+      const description = document.getElementById(descriptionId);
+      console.log('Found description element:', description);
+      
+      if (!description) {
+        console.error('Description element not found:', descriptionId);
+        return;
+      }
+      
+      const link = description.previousElementSibling;
+      console.log('Found link:', link);
+      
+      if (!link) {
+        console.error('Link not found');
+        return;
+      }
+      
+      const toggleText = link.querySelector('.desc-toggle-text');
+      const toggleIcon = link.querySelector('.desc-toggle-icon');
+      
+      console.log('Current display:', description.style.display);
+      
+      if (description.style.display === 'none' || description.style.display === '') {
+        description.style.display = 'block';
+        if (toggleText) toggleText.textContent = 'Hide Description';
+        if (toggleIcon) toggleIcon.textContent = '▲';
+        console.log('Showing description');
+      } else {
+        description.style.display = 'none';
+        if (toggleText) toggleText.textContent = 'Show Description';
+        if (toggleIcon) toggleIcon.textContent = '▼';
+        console.log('Hiding description');
+      }
+    }
+
+    // ===== DEVELOPMENT/DEBUG FUNCTIONS =====
+    function _runSelfTests() {
+      // Owner reorder simulation
+      const list = [
+        { id: '1', orderIndex: 1 },
+        { id: '2', orderIndex: 2 },
+        { id: '3', orderIndex: 3 },
+      ];
+      const move = (arr, i, d) => {
+        const j = i + d; if (j < 0 || j >= arr.length) return arr;
+        const a = arr[i].orderIndex, b = arr[j].orderIndex;
+        arr[i].orderIndex = b; arr[j].orderIndex = a; return arr;
+      };
+      console.assert(move(JSON.parse(JSON.stringify(list)), 2, -1)[1].orderIndex === 3, 'Swap up failed');
+      console.assert(move(JSON.parse(JSON.stringify(list)), 1, +1)[2].orderIndex === 2, 'Swap down failed');
+
+      // URL helpers
+      console.assert(sanitizeUrl('example.com') === 'https://example.com', 'sanitizeUrl should add protocol');
+      console.assert(sanitizeUrl('https://x.com') === 'https://x.com', 'sanitizeUrl should keep protocol');
+    }
+  </script>
+  
+  <style>
+    /* ===== CSS VARIABLES ===== */
+:root {
+  --card-bg: rgba(255,255,255,0.08);
+  --card-border: rgba(255,255,255,0.18);
+      --lights-height: 38px;
+      --pane-gap: 12px;
+}
+
+    /* ===== BASE STYLES ===== */
+html, body {
+  min-height: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: sans-serif;
+}
+
+body {
+  background: 
+    /* Christmas pattern overlay */
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    radial-gradient(circle at 40% 60%, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    radial-gradient(circle at 60% 30%, rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    radial-gradient(circle at 90% 10%, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    radial-gradient(circle at 10% 90%, rgba(255, 255, 255, 0.09) 1px, transparent 1px),
+    /* Snowflake pattern */
+    radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.03) 2px, transparent 2px),
+    radial-gradient(circle at 70% 70%, rgba(255, 255, 255, 0.04) 2px, transparent 2px),
+    radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.02) 2px, transparent 2px),
+    /* Main gradient */
+    linear-gradient(135deg, #0a3a2a 0%, #12613f 25%, #1b7a53 50%, #0f4c3a 75%, #0a3a2a 100%);
+  background-size: 200px 200px, 300px 300px, 250px 250px, 180px 180px, 220px 220px, 280px 280px, 150px 150px, 120px 120px, 100px 100px, 100% 100%;
+  color: #eaf4ea;
+  padding-top: 1px;
+}
+
+    h1, h2, h3 { 
+      color: #e0ecff; 
+      position: relative;
+      z-index: 10001;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    h2 { 
+      border-bottom: 1px solid #eee; 
+      padding-bottom: 10px; 
+      margin-bottom: 20px; 
+    }
+
+    /* ===== LAYOUT ===== */
+    .content-pane {
+      position: fixed;
+      top: 0;
+      left: 0; 
+      right: 0; 
+      bottom: 0;
+      overflow: auto;
+      padding: 16px 0;
+      z-index: 3;
+      display: flex;
+      justify-content: center;
+    }
+
+    .content-inner {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 0 20px;
+      box-sizing: border-box;
+      position: relative;
+      z-index: 10001;
+    }
+
+    /* ===== CARD COMPONENTS ===== */
+#authForm, #addGiftForm, #otherUsersList, #viewOtherUserGiftsContainer, #giftListDisplay {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 10001;
+    }
+
+    /* ===== FORM ELEMENTS ===== */
+    #authForm input, #addGiftForm input, #addGiftForm textarea {
+  display: block;
+      width: calc(100% - 20px);
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    #addGiftForm textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    /* ===== AUTH TABS ===== */
+    .auth-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .auth-tabs button {
+      background: #f1f3f5;
+      border: 1px solid #d0d7de;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .auth-tabs button.active {
+      background: #3f51b5;
+      color: #fff;
+      border-color: #3f51b5;
+    }
+
+    /* ===== BUTTONS ===== */
+    #authForm button, #addGiftForm button, #signOutButton, 
+    .view-user-list-btn, .toggle-purchased-btn, .edit-gift-btn, .delete-gift-btn {
+      padding: 12px 20px;
+      margin-right: 10px;
+      border: none;
+  border-radius: 9999px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0,0,0,.2);
+}
+
+    #signInButton { background-color: #007bff; color: white; }
+    #signUpButton { background-color: #28a745; color: white; }
+    #signOutButton { 
+      background-color: #28a745; 
+      color: white; 
+      padding: 6px 12px;
+      font-size: 14px;
+      margin: 0;
+    }
+    #addGiftButton { background-color: #dc3545; color: white; }
+    .view-user-list-btn { background-color: #f1c40f; color: #2c3e50; margin-bottom: 5px; }
+    .toggle-purchased-btn.mark { background-color: #28a745; color: white; font-size: 0.8em; padding: 6px 10px; }
+    .toggle-purchased-btn.unmark { background-color: #ffc107; color: #333; font-size: 0.8em; padding: 6px 10px; }
+    .edit-gift-btn { background-color: #1976d2; color: white; font-size: 0.9em; padding: 8px 12px; }
+    .delete-gift-btn { background-color: #e53935; color: white; font-size: 0.9em; padding: 8px 12px; }
+    .move-buttons-container { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 2px; 
+      margin-left: 8px; 
+    }
+    .move-up-btn { background-color: #6c757d; color: white; font-size: 1em; padding: 4px 6px; border-radius: 4px; min-width: 24px; }
+    .move-down-btn { background-color: #6c757d; color: white; font-size: 1em; padding: 4px 6px; border-radius: 4px; min-width: 24px; }
+
+    #authForm button:hover, #addGiftForm button:hover, #signOutButton:hover, 
+    .view-user-list-btn:hover, .toggle-purchased-btn:hover, .edit-gift-btn:hover, .delete-gift-btn:hover,
+    .move-up-btn:hover, .move-down-btn:hover { 
+      opacity: .9; 
+    }
+
+    /* ===== DESCRIPTION TOGGLE ===== */
+    .description-toggle {
+      background-color: #6c757d;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      transition: background-color 0.2s ease;
+    }
+
+    .description-toggle:hover {
+      background-color: #5a6268;
+    }
+
+    .description-container {
+      margin-bottom: 15px;
+    }
+
+    #descriptionInputContainer {
+      margin-top: 10px;
+    }
+
+    /* ===== GIFT DESCRIPTION LINK ===== */
+    .description-link {
+      color: #87ceeb;
+      cursor: pointer;
+      font-size: 12px;
+      margin-top: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.2s ease;
+      text-decoration: none;
+    }
+
+    .description-link:hover {
+      color: #b0e0e6;
+      text-decoration: underline;
+    }
+
+    .gift-description {
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 8px;
+      border-radius: 4px;
+      margin-top: 4px;
+      font-style: italic;
+      color: #e0ecff;
+      word-wrap: break-word;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      hyphens: auto;
+      max-width: 20ch;
+      box-sizing: border-box;
+    }
+
+    /* ===== STATUS BAR ===== */
+    #authStatus {
+      background: rgba(65, 90, 119, 0.25);
+      border: 1px solid rgba(65, 90, 119, 0.5);
+      backdrop-filter: blur(6px);
+      color: #d7e8ff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      border-radius: 5px;
+      position: relative;
+      z-index: 10002;
+    }
+
+    /* ===== GIFT LIST ===== */
+    #giftListDisplay {
+      margin-top: 0;
+    }
+
+    #giftListDisplay ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    #giftListDisplay li {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      margin-bottom: 8px;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      color: #333;
+    }
+
+    #giftListDisplay li strong {
+      color: #3f51b5;
+    }
+
+    #giftListDisplay li > div:first-child {
+      max-width: 20ch;
+      word-wrap: break-word;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      hyphens: auto;
+    }
+
+    #viewOtherUserGiftsContainer li {
+      margin-left: -20px;
+      padding-left: 0;
+    }
+
+    /* ===== LINKS ===== */
+    .gift-link {
+      text-decoration: none;
+    }
+
+    .gift-link:hover {
+      text-decoration: underline;
+    }
+
+    .gift-link-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border: 1px solid rgba(255,255,255,0.24);
+      border-radius: 12px;
+      font-size: 12px;
+      background: rgba(255,255,255,0.08);
+      margin-left: 6px;
+      color: #1a365d;
+    }
+
+    /* ===== UTILITY CLASSES ===== */
+    #addGiftForm, #giftListDisplay, #otherUsersList, #viewOtherUserGiftsContainer { 
+      display: none; 
+    }
+
+    #forgotPasswordLink {
+      display: block;
+      text-align: center;
+      margin-top: 10px;
+      font-size: .9em;
+      color: #007bff;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    #forgotPasswordLink:hover {
+      color: #0056b3;
+    }
+
+    /* ===== CHRISTMAS LIGHTS PICTURE FRAME ===== */
+    /* Top border */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 38px;
+      pointer-events: none;
+      z-index: -1;
+      background:
+        radial-gradient(circle at 10% 50%, #ff4d4d 0 6px, transparent 7px) 0 0/120px 38px,
+        radial-gradient(circle at 30% 50%, #ffd166 0 6px, transparent 7px) 0 0/120px 38px,
+        radial-gradient(circle at 50% 50%, #6ee7b7 0 6px, transparent 7px) 0 0/120px 38px,
+        radial-gradient(circle at 70% 50%, #60a5fa 0 6px, transparent 7px) 0 0/120px 38px,
+        radial-gradient(circle at 90% 50%, #f472b6 0 6px, transparent 7px) 0 0/120px 38px,
+        linear-gradient(#2b364a, #2b364a) 0 18px/100% 2px repeat-x;
+      animation: twinkle 0.8s ease-in-out infinite;
+    }
+
+    /* Right border */
+    body::after {
+      content: "";
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 38px;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(circle at 50% 10%, #ff4d4d 0 6px, transparent 7px) 0 0/38px 120px,
+        radial-gradient(circle at 50% 30%, #ffd166 0 6px, transparent 7px) 0 0/38px 120px,
+        radial-gradient(circle at 50% 50%, #6ee7b7 0 6px, transparent 7px) 0 0/38px 120px,
+        radial-gradient(circle at 50% 70%, #60a5fa 0 6px, transparent 7px) 0 0/38px 120px,
+        radial-gradient(circle at 50% 90%, #f472b6 0 6px, transparent 7px) 0 0/38px 120px,
+        linear-gradient(#2b364a, #2b364a) 18px 0/2px 100% repeat-y;
+      animation: twinkle 0.8s ease-in-out infinite;
+    }
+
+    /* Bottom border */
+    html::before {
+      content: "";
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 38px;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(circle at 10% 50%, #ff4d4d 0 6px, transparent 7px) 0 0/120px 38px,
+        radial-gradient(circle at 30% 50%, #ffd166 0 6px, transparent 7px) 0 0/120px 38px,
+        radial-gradient(circle at 50% 50%, #6ee7b7 0 6px, transparent 7px) 0 0/120px 38px,
+        radial-gradient(circle at 70% 50%, #60a5fa 0 6px, transparent 7px) 0 0/120px 38px,
+        radial-gradient(circle at 90% 50%, #f472b6 0 6px, transparent 7px) 0 0/120px 38px,
+        linear-gradient(#2b364a, #2b364a) 0 18px/100% 2px repeat-x;
+      animation: twinkle 0.8s ease-in-out infinite;
+    }
+
+    /* Left border */
+    html::after {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 38px;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(circle at 50% 10%, #ff4d4d 0 6px, transparent 7px) 0 0/38px 120px,
+        radial-gradient(circle at 50% 30%, #ffd166 0 6px, transparent 7px) 0 0/38px 120px,
+        radial-gradient(circle at 50% 50%, #6ee7b7 0 6px, transparent 7px) 0 0/38px 120px,
+        radial-gradient(circle at 50% 70%, #60a5fa 0 6px, transparent 7px) 0 0/38px 120px,
+        radial-gradient(circle at 50% 90%, #f472b6 0 6px, transparent 7px) 0 0/38px 120px,
+        linear-gradient(#2b364a, #2b364a) 18px 0/2px 100% repeat-y;
+      animation: twinkle 0.8s ease-in-out infinite;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.35); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      body::after { animation: none !important; }
+}
+</style>
+<!-- Full-page snow overlay (does not block clicks) -->
+<canvas id="snow" aria-hidden="true"></canvas>
+
+<script>
+  // Performance optimization functions (needed for snow animation)
+  function throttle(func, limit) {
+    let inThrottle;
+    return function() {
+      const args = arguments;
+      const context = this;
+      if (!inThrottle) {
+        func.apply(context, args);
+        inThrottle = true;
+        setTimeout(() => inThrottle = false, limit);
+      }
+    };
+  }
+</script>
+
+<script>
+(() => {
+  const c = document.getElementById('snow');
+  if (!c) return;
+  const ctx = c.getContext('2d', { alpha: true });
+
+  Object.assign(c.style, {
+    position: 'fixed',
+    inset: '0',
+    width: '100vw',
+    height: '100vh',
+    pointerEvents: 'none',
+    zIndex: 1
+  });
+
+  let w, h, flakes = [], targetCount = 0, anim;
+  const DPR = window.devicePixelRatio || 1;
+
+  function rand(min, max) { return Math.random() * (max - min) + min; }
+
+  function makeFlake(spawnTop = false) {
+    const r = rand(1, 3.6);
+    return {
+      x: rand(0, w),
+      y: spawnTop ? rand(-h, 0) : rand(0, h),
+      r,
+      vy: rand(0.35, 1.15) * (1 + r * 0.15),
+      drift: rand(0.2, 0.7),
+      a: rand(0, Math.PI * 2),
+      spin: rand(-0.02, 0.02),
+      alpha: rand(0.55, 1)
+    };
+  }
+
+  function resize() {
+    w = c.clientWidth;
+    h = c.clientHeight;
+    c.width = Math.floor(w * DPR);
+    c.height = Math.floor(h * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    // Density scales with viewport; tweak divisor to change density.
+    targetCount = Math.min(220, Math.floor((w * h) / 12000));
+    if (flakes.length < targetCount) {
+      for (let i = flakes.length; i < targetCount; i++) flakes.push(makeFlake(true));
+    } else {
+      flakes.length = targetCount;
+    }
+  }
+
+  function step() {
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#fff';
+    for (let f of flakes) {
+      f.a += f.spin;
+      f.y += f.vy;
+      f.x += Math.sin(f.a) * f.drift;
+
+      if (f.y - f.r > h) { f.x = rand(0, w); f.y = -10; }
+      if (f.x < -10) f.x = w + 10;
+      if (f.x > w + 10) f.x = -10;
+
+      ctx.globalAlpha = f.alpha;
+      ctx.beginPath();
+      ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    anim = requestAnimationFrame(step);
+  }
+
+  // Use throttled resize observer for better performance
+  const throttledResize = throttle(resize, 100);
+  const ro = new ResizeObserver(throttledResize);
+  ro.observe(document.documentElement);
+  resize();
+  step();
+
+  // Pause when tab hidden to save battery
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { if (anim) cancelAnimationFrame(anim); }
+    else { step(); }
+  });
+})();
+</script>
+
+</head>
+<body>
+<div class="content-pane"><div class="content-inner">
+  <h1 id="christmasHeader">Welcome to the Family Gift List!</h1>
+  <div id="authStatus">
+    <span id="authStatusText">Checking authentication status...</span>
+    <button id="signOutButton" style="display:none;">Sign Out</button>
+  </div>
+
+  <div id="authForm">
+    <h2>Welcome</h2>
+    <div class="auth-tabs">
+      <button type="button" id="tabSignIn" class="active">I have an account</button>
+      <button type="button" id="tabSignUp">Create an account</button>
+    </div>
+    <input type="text" id="firstNameInput" placeholder="First name (to log in)" required>
+    <input type="email" id="emailInput" placeholder="Email" required style="display:none;">
+    <input type="password" id="passwordInput" placeholder="Password" required>
+    <div style="margin-top:8px; display:flex; gap:10px; flex-wrap:wrap;">
+      <button id="signInButton">Sign In</button>
+      <button id="signUpButton" style="display:none;">Sign Up</button>
+      <a id="forgotPasswordLink">Forgot Password?</a>
+    </div>
+  </div>
+
+
+  <form id="addGiftForm">
+    <h2>Add a New Gift to Your List</h2>
+    <input type="text" id="giftNameInput" placeholder="Gift Name" maxlength="20" required>
+    <textarea id="giftDescriptionInput" placeholder="Description"></textarea>
+    <input type="url" id="giftUrlInput" placeholder="Link to the item (optional)">
+    <button type="submit" id="addGiftButton">Add Gift</button>
+  </form>
+
+  <div id="giftListDisplay"><h3>Please sign in to view and add your gifts.</h3></div>
+  <div id="otherUsersList"></div>
+  <div id="viewOtherUserGiftsContainer"></div>
+  </div></div>
+</body>
+</html>
+
