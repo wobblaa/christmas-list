@@ -292,6 +292,7 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
             giftListDisplayElement.style.display = 'none';
             otherUsersListElement.style.display = 'none';
             viewOtherUserGiftsContainer.style.display = 'none';
+            myPurchasesContainer.style.display = 'none';
             giftListDisplayElement.innerHTML = "<h3>Please sign in to view and add your gifts.</h3>";
             otherUsersListElement.innerHTML = "";
             viewOtherUserGiftsContainer.innerHTML = "";
@@ -522,19 +523,30 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
             <ul>`;
           for (const g of gifts) {
             const linkHtml = g.url ? ` <span>${renderGiftLink(g.url)}</span>` : '';
+            const hasDescription = g.description && g.description.trim();
+            const descriptionId = `owner-desc-${g.id}`;
+            
             html += `
-              <li>
-                <div>
-                  <strong>${g.name}</strong> ${g.description ? `- ${g.description}` : ''}
-                  ${linkHtml}
+              <li class="draggable-gift" draggable="true" data-id="${g.id}">
+                <div class="drag-handle" title="Drag to reorder">⋮⋮</div>
+                <div class="gift-content">
+                  <div>
+                    <strong>${g.name}</strong>
+                    ${linkHtml}
+                  </div>
+                  ${hasDescription ? `
+                    <div class="description-link" onclick="toggleGiftDescription('${descriptionId}')">
+                      <span class="desc-toggle-text">Description</span>
+                      <span class="desc-toggle-icon">▼</span>
+                    </div>
+                    <div id="${descriptionId}" class="gift-description" style="display: none;">
+                      ${g.description}
+                    </div>
+                  ` : '<div style="height: 20px;"></div>'}
                 </div>
                 <div style="margin-top:6px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
                   <button class="edit-gift-btn" data-id="${g.id}" data-name="${escapeAttr(g.name)}" data-desc="${escapeAttr(g.description || '')}" data-url="${escapeAttr(g.url || '')}">Edit</button>
                   <button class="delete-gift-btn" data-id="${g.id}">Remove</button>
-                  <div class="move-buttons-container">
-                    <button class="move-up-btn" data-id="${g.id}" title="Move Up">▲</button>
-                    <button class="move-down-btn" data-id="${g.id}" title="Move Down">▼</button>
-                  </div>
                 </div>
               </li>
             `;
@@ -562,19 +574,8 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
             });
           });
 
-          // Wire move up/down (swap orderIndex atomically)
-          document.querySelectorAll('.move-up-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-              const id = e.currentTarget.dataset.id;
-              await moveGift(id, -1);
-            });
-          });
-          document.querySelectorAll('.move-down-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-              const id = e.currentTarget.dataset.id;
-              await moveGift(id, +1);
-            });
-          });
+          // Wire drag and drop functionality
+          setupDragAndDrop();
         },
         (error) => {
           console.error(error);
@@ -613,6 +614,88 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
         });
       } catch (err) {
         showError(`Failed to move item: ${err.message}`);
+      }
+    }
+
+    // ===== DRAG AND DROP FUNCTIONALITY =====
+    function setupDragAndDrop() {
+      const draggableItems = document.querySelectorAll('.draggable-gift');
+      
+      draggableItems.forEach(item => {
+        item.addEventListener('dragstart', handleDragStart);
+        item.addEventListener('dragover', handleDragOver);
+        item.addEventListener('drop', handleDrop);
+        item.addEventListener('dragend', handleDragEnd);
+      });
+    }
+
+    let draggedElement = null;
+
+    function handleDragStart(e) {
+      draggedElement = e.target;
+      e.target.style.opacity = '0.5';
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/html', e.target.outerHTML);
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      
+      const afterElement = getDragAfterElement(e.target.closest('ul'), e.clientY);
+      const dragging = document.querySelector('.dragging');
+      
+      if (afterElement == null) {
+        e.target.closest('ul').appendChild(draggedElement);
+      } else {
+        e.target.closest('ul').insertBefore(draggedElement, afterElement);
+      }
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      return false;
+    }
+
+    function handleDragEnd(e) {
+      e.target.style.opacity = '';
+      
+      // Update order in database
+      const newOrder = Array.from(document.querySelectorAll('.draggable-gift')).map((item, index) => ({
+        id: item.dataset.id,
+        newOrderIndex: index + 1
+      }));
+      
+      updateGiftOrder(newOrder);
+    }
+
+    function getDragAfterElement(container, y) {
+      const draggableElements = [...container.querySelectorAll('.draggable-gift:not(.dragging)')];
+      
+      return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        
+        if (offset < 0 && offset > closest.offset) {
+          return { offset: offset, element: child };
+        } else {
+          return closest;
+        }
+      }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    async function updateGiftOrder(newOrder) {
+      try {
+        await runTransaction(db, async (tx) => {
+          for (const { id, newOrderIndex } of newOrder) {
+            const giftRef = doc(db, 'giftItems', id);
+            tx.update(giftRef, { orderIndex: newOrderIndex });
+          }
+        });
+      } catch (error) {
+        showError(`Failed to update order: ${error.message}`);
+        // Refresh the list to restore correct order
+        displayUserGifts(currentUserUid);
       }
     }
 
@@ -1254,18 +1337,9 @@ body {
     .toggle-purchased-btn.unmark { background-color: #dc3545; color: white; font-size: 0.8em; padding: 6px 10px; }
     .edit-gift-btn { background-color: #1976d2; color: white; font-size: 0.9em; padding: 8px 12px; }
     .delete-gift-btn { background-color: #e53935; color: white; font-size: 0.9em; padding: 8px 12px; }
-    .move-buttons-container { 
-      display: flex; 
-      flex-direction: column; 
-      gap: 2px; 
-      margin-left: 8px; 
-    }
-    .move-up-btn { background-color: #6c757d; color: white; font-size: 1em; padding: 4px 6px; border-radius: 4px; min-width: 24px; }
-    .move-down-btn { background-color: #6c757d; color: white; font-size: 1em; padding: 4px 6px; border-radius: 4px; min-width: 24px; }
 
     #authForm button:hover, #addGiftForm button:hover, #signOutButton:hover, 
-    .view-user-list-btn:hover, .toggle-purchased-btn:hover, .edit-gift-btn:hover, .delete-gift-btn:hover,
-    .move-up-btn:hover, .move-down-btn:hover { 
+    .view-user-list-btn:hover, .toggle-purchased-btn:hover, .edit-gift-btn:hover, .delete-gift-btn:hover { 
       opacity: .9; 
     }
 
@@ -1386,6 +1460,64 @@ body {
     #viewOtherUserGiftsContainer li {
       margin-left: -20px;
       padding-left: 0;
+    }
+
+    /* ===== YOUR GIFT LIST ===== */
+    #giftListDisplay li {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 8px;
+      padding: 12px;
+      border-radius: 6px;
+    }
+
+    #giftListDisplay li strong {
+      color: #eaf4ea;
+    }
+
+    /* ===== DRAG AND DROP STYLING ===== */
+    .draggable-gift {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      cursor: move;
+      transition: all 0.2s ease;
+    }
+
+    .draggable-gift:hover {
+      transform: translateX(2px);
+    }
+
+    .draggable-gift.dragging {
+      opacity: 0.5;
+      transform: rotate(2deg);
+    }
+
+    .drag-handle {
+      color: #888;
+      font-size: 16px;
+      line-height: 1;
+      padding: 8px 4px;
+      cursor: grab;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      transition: color 0.2s ease;
+    }
+
+    .drag-handle:hover {
+      color: #eaf4ea;
+    }
+
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+
+    .gift-content {
+      flex: 1;
+      min-width: 0;
     }
 
     /* ===== MY PURCHASES ===== */
