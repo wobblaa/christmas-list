@@ -622,20 +622,43 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
       const draggableItems = document.querySelectorAll('.draggable-gift');
       
       draggableItems.forEach(item => {
+        // Desktop drag events
         item.addEventListener('dragstart', handleDragStart);
         item.addEventListener('dragover', handleDragOver);
         item.addEventListener('drop', handleDrop);
         item.addEventListener('dragend', handleDragEnd);
+        
+        // Mobile touch events
+        item.addEventListener('touchstart', handleTouchStart, { passive: false });
+        item.addEventListener('touchmove', handleTouchMove, { passive: false });
+        item.addEventListener('touchend', handleTouchEnd, { passive: false });
       });
     }
 
     let draggedElement = null;
+    let touchStartY = 0;
+    let touchStartElement = null;
+    let isDragging = false;
 
     function handleDragStart(e) {
       draggedElement = e.target;
       e.target.style.opacity = '0.5';
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text/html', e.target.outerHTML);
+      
+      // Prevent centering on mobile
+      if (e.dataTransfer.setDragImage) {
+        const dragImage = document.createElement('div');
+        dragImage.style.position = 'absolute';
+        dragImage.style.top = '-1000px';
+        dragImage.style.left = '-1000px';
+        dragImage.style.width = '1px';
+        dragImage.style.height = '1px';
+        dragImage.style.backgroundColor = 'transparent';
+        document.body.appendChild(dragImage);
+        e.dataTransfer.setDragImage(dragImage, 0, 0);
+        setTimeout(() => document.body.removeChild(dragImage), 0);
+      }
     }
 
     function handleDragOver(e) {
@@ -697,6 +720,60 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
         // Refresh the list to restore correct order
         displayUserGifts(currentUserUid);
       }
+    }
+
+    // ===== TOUCH EVENT HANDLERS FOR MOBILE =====
+    function handleTouchStart(e) {
+      touchStartElement = e.target.closest('.draggable-gift');
+      touchStartY = e.touches[0].clientY;
+      isDragging = false;
+    }
+
+    function handleTouchMove(e) {
+      if (!touchStartElement) return;
+      
+      const touchY = e.touches[0].clientY;
+      const deltaY = touchY - touchStartY;
+      
+      // Start dragging if moved more than 10px
+      if (Math.abs(deltaY) > 10 && !isDragging) {
+        isDragging = true;
+        touchStartElement.style.opacity = '0.5';
+        touchStartElement.style.transform = 'rotate(2deg)';
+        e.preventDefault();
+      }
+      
+      if (isDragging) {
+        e.preventDefault();
+        
+        const afterElement = getDragAfterElement(touchStartElement.closest('ul'), touchY);
+        
+        if (afterElement == null) {
+          touchStartElement.closest('ul').appendChild(touchStartElement);
+        } else {
+          touchStartElement.closest('ul').insertBefore(touchStartElement, afterElement);
+        }
+      }
+    }
+
+    function handleTouchEnd(e) {
+      if (!touchStartElement) return;
+      
+      if (isDragging) {
+        touchStartElement.style.opacity = '';
+        touchStartElement.style.transform = '';
+        
+        // Update order in database
+        const newOrder = Array.from(document.querySelectorAll('.draggable-gift')).map((item, index) => ({
+          id: item.dataset.id,
+          newOrderIndex: index + 1
+        }));
+        
+        updateGiftOrder(newOrder);
+      }
+      
+      touchStartElement = null;
+      isDragging = false;
     }
 
     // Helper: resolve label from /users.username, else /usernames (by uid), else email prefix
