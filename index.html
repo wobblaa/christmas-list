@@ -959,7 +959,10 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
 
     // ===== MY PURCHASES VIEW =====
     async function displayMyPurchases() {
-      if (!currentUserUid) return;
+      if (!currentUserUid) {
+        myPurchasesContainer.style.display = 'none';
+        return;
+      }
       
       myPurchasesContainer.style.display = 'block';
       myPurchasesContainer.innerHTML = '<h3>Loading your purchases...</h3>';
@@ -1248,7 +1251,7 @@ body {
     #addGiftButton { background-color: #dc3545; color: white; }
     .view-user-list-btn { background-color: #f1c40f; color: #2c3e50; margin-bottom: 5px; }
     .toggle-purchased-btn.mark { background-color: #28a745; color: white; font-size: 0.8em; padding: 6px 10px; }
-    .toggle-purchased-btn.unmark { background-color: #ffc107; color: #333; font-size: 0.8em; padding: 6px 10px; }
+    .toggle-purchased-btn.unmark { background-color: #dc3545; color: white; font-size: 0.8em; padding: 6px 10px; }
     .edit-gift-btn { background-color: #1976d2; color: white; font-size: 0.9em; padding: 8px 12px; }
     .delete-gift-btn { background-color: #e53935; color: white; font-size: 0.9em; padding: 8px 12px; }
     .move-buttons-container { 
@@ -1419,8 +1422,8 @@ body {
     }
 
     .unmark-purchase-btn {
-      background-color: #f1c40f;
-      color: #2c3e50;
+      background-color: #dc3545;
+      color: white;
       border: none;
       padding: 6px 12px;
       border-radius: 9999px;
@@ -1430,7 +1433,7 @@ body {
     }
 
     .unmark-purchase-btn:hover {
-      background-color: #e6b800;
+      background-color: #c82333;
     }
 
     /* ===== LINKS ===== */
