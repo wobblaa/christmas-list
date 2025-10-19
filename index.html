@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>My Family's Gift List!</title>
+  <title>My Family Gift List!</title>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
     import {
@@ -193,7 +193,7 @@
     let authStatusElement, authStatusTextElement, authFormElement, firstNameInput, emailInput, passwordInput,
         signInButton, signUpButton, signOutButton, tabSignIn, tabSignUp,
         addGiftForm, giftNameInput, giftDescriptionInput, giftUrlInput, giftListDisplayElement,
-        otherUsersListElement, viewOtherUserGiftsContainer, forgotPasswordLink;
+        otherUsersListElement, viewOtherUserGiftsContainer, myPurchasesContainer, forgotPasswordLink;
 
     // Session state
     let currentUserUid = null;
@@ -223,6 +223,7 @@
       giftListDisplayElement = document.getElementById('giftListDisplay');
       otherUsersListElement = document.getElementById('otherUsersList');
       viewOtherUserGiftsContainer = document.getElementById('viewOtherUserGiftsContainer');
+      myPurchasesContainer = document.getElementById('myPurchasesContainer');
       forgotPasswordLink = document.getElementById('forgotPasswordLink');
 
       // Auth tabs
@@ -275,6 +276,7 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
             addGiftForm.style.display = 'block';
             giftListDisplayElement.style.display = 'block';
             otherUsersListElement.style.display = 'block';
+            displayMyPurchases(); // Show user's purchases
 
             await createUserProfile(user);
 
@@ -682,6 +684,14 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
 
       viewOtherUserGiftsContainer.style.display = 'block';
       viewOtherUserGiftsContainer.innerHTML = `<h3>Loading ${targetLabel}'s gifts...</h3>`;
+      
+      // Auto-scroll to bring the gift list into view
+      setTimeout(() => {
+        viewOtherUserGiftsContainer.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }, 100);
 
       const baseCol = collection(db, 'giftItems');
 
@@ -765,9 +775,7 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
             const giftId = e.currentTarget.dataset.giftId;
             const ownerLabel = e.currentTarget.dataset.targetLabel;
             const isPurchased = e.currentTarget.dataset.isPurchased === 'true';
-            if (confirm(`Are you sure you want to ${isPurchased ? 'unmark' : 'mark'} this gift as purchased for ${ownerLabel}?`)) {
-              await toggleGiftPurchasedStatus(giftId);
-            }
+            await toggleGiftPurchasedStatus(giftId);
           });
         });
       };
@@ -802,6 +810,9 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
             throw new Error('Already claimed by someone else.');
           }
         });
+        
+        // Refresh the "My Purchases" card after successful purchase/unpurchase
+        displayMyPurchases();
       } catch (error) {
         showError(`Failed to update purchase status: ${error.message}`);
       }
@@ -946,6 +957,124 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
       }
     }
 
+    // ===== MY PURCHASES VIEW =====
+    async function displayMyPurchases() {
+      if (!currentUserUid) return;
+      
+      myPurchasesContainer.style.display = 'block';
+      myPurchasesContainer.innerHTML = '<h3>Loading your purchases...</h3>';
+      
+      try {
+        // Query all gifts purchased by current user
+        const q = query(
+          collection(db, 'giftItems'),
+          where('purchasedByUid', '==', currentUserUid)
+        );
+        
+        const snapshot = await getDocs(q);
+        const purchasedGifts = [];
+        
+        for (const doc of snapshot.docs) {
+          const data = doc.data();
+          purchasedGifts.push({
+            id: doc.id,
+            ...data
+          });
+        }
+        
+        if (purchasedGifts.length === 0) {
+          myPurchasesContainer.innerHTML = '<h3>My Purchases</h3><p>You haven\'t purchased any gifts yet.</p>';
+          return;
+        }
+        
+        // Group by owner
+        const purchasesByOwner = {};
+        for (const gift of purchasedGifts) {
+          if (!purchasesByOwner[gift.listOwnerId]) {
+            purchasesByOwner[gift.listOwnerId] = [];
+          }
+          purchasesByOwner[gift.listOwnerId].push(gift);
+        }
+        
+        // Get owner names
+        const ownerNames = {};
+        for (const ownerUid of Object.keys(purchasesByOwner)) {
+          const userDoc = await getDoc(doc(db, 'users', ownerUid));
+          if (userDoc.exists()) {
+            ownerNames[ownerUid] = userDoc.data().username;
+          } else {
+            ownerNames[ownerUid] = 'Unknown User';
+          }
+        }
+        
+        // Build HTML
+        let html = '<h3>My Purchases</h3>';
+        
+        for (const [ownerUid, gifts] of Object.entries(purchasesByOwner)) {
+          const ownerName = ownerNames[ownerUid];
+          html += `<div class="purchase-section">
+            <h4>${ownerName}'s Gifts</h4>
+            <ul>`;
+          
+          for (const gift of gifts) {
+            const linkHtml = gift.url ? ` <span>${renderGiftLink(gift.url)}</span>` : '';
+            const hasDescription = gift.description && gift.description.trim();
+            const descriptionId = `purchase-desc-${gift.id}`;
+            
+            html += `
+              <li>
+                <div>
+                  <div>
+                    <strong>${gift.name}</strong>
+                    ${linkHtml}
+                  </div>
+                  ${hasDescription ? `
+                    <div class="description-link" onclick="toggleGiftDescription('${descriptionId}')">
+                      <span class="desc-toggle-text">Description</span>
+                      <span class="desc-toggle-icon">▼</span>
+                    </div>
+                    <div id="${descriptionId}" class="gift-description" style="display: none;">
+                      ${gift.description}
+                    </div>
+                  ` : '<div style="height: 20px;"></div>'}
+                </div>
+                <button class="unmark-purchase-btn" data-gift-id="${gift.id}" data-owner-uid="${ownerUid}" data-owner-name="${ownerName}">
+                  Unmark Purchased
+                </button>
+              </li>`;
+          }
+          
+          html += '</ul></div>';
+        }
+        
+        myPurchasesContainer.innerHTML = html;
+        
+        // Add event listeners for unmark buttons
+        document.querySelectorAll('.unmark-purchase-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const giftId = e.currentTarget.dataset.giftId;
+            const ownerName = e.currentTarget.dataset.ownerName;
+            
+            try {
+              await updateDoc(doc(db, 'giftItems', giftId), {
+                isPurchased: false,
+                purchasedByUid: null,
+                purchasedAt: null
+              });
+              showSuccess('Gift unmarked as purchased');
+              displayMyPurchases(); // Refresh the list
+            } catch (error) {
+              showError('Failed to unmark gift: ' + error.message);
+            }
+          });
+        });
+        
+      } catch (error) {
+        console.error('Error loading purchases:', error);
+        myPurchasesContainer.innerHTML = '<h3>My Purchases</h3><p>Error loading your purchases. Please try again.</p>';
+      }
+    }
+
     // ===== DEVELOPMENT/DEBUG FUNCTIONS =====
     function _runSelfTests() {
       // Owner reorder simulation
@@ -1045,7 +1174,7 @@ body {
     }
 
     /* ===== CARD COMPONENTS ===== */
-#authForm, #addGiftForm, #otherUsersList, #viewOtherUserGiftsContainer, #giftListDisplay {
+#authForm, #addGiftForm, #otherUsersList, #viewOtherUserGiftsContainer, #giftListDisplay, #myPurchasesContainer {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   backdrop-filter: blur(6px);
@@ -1256,6 +1385,54 @@ body {
       padding-left: 0;
     }
 
+    /* ===== MY PURCHASES ===== */
+    .purchase-section {
+      margin-bottom: 20px;
+    }
+
+    .purchase-section h4 {
+      color: #e0ecff;
+      margin-bottom: 10px;
+      font-size: 1.1em;
+    }
+
+    .purchase-section ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    .purchase-section li {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 8px;
+      padding: 12px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .purchase-section li > div:first-child {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .unmark-purchase-btn {
+      background-color: #f1c40f;
+      color: #2c3e50;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      cursor: pointer;
+      font-size: 0.8em;
+      flex-shrink: 0;
+    }
+
+    .unmark-purchase-btn:hover {
+      background-color: #e6b800;
+    }
+
     /* ===== LINKS ===== */
     .gift-link {
       text-decoration: none;
@@ -1277,7 +1454,7 @@ body {
     }
 
     /* ===== UTILITY CLASSES ===== */
-    #addGiftForm, #giftListDisplay, #otherUsersList, #viewOtherUserGiftsContainer { 
+    #addGiftForm, #giftListDisplay, #otherUsersList, #viewOtherUserGiftsContainer, #myPurchasesContainer { 
       display: none; 
     }
 
@@ -1527,9 +1704,8 @@ body {
   <div id="giftListDisplay"><h3>Please sign in to view and add your gifts.</h3></div>
   <div id="otherUsersList"></div>
   <div id="viewOtherUserGiftsContainer"></div>
+  <div id="myPurchasesContainer"></div>
   </div></div>
 </body>
 </html>
-
-
 
