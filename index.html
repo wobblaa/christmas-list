@@ -544,7 +544,7 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
                     </div>
                   ` : '<div style="height: 20px;"></div>'}
                 </div>
-                <div style="margin-top:6px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                <div style="margin-top:6px; display:flex; gap:4px; flex-wrap:wrap; align-items:center;">
                   <button class="edit-gift-btn" data-id="${g.id}" data-name="${escapeAttr(g.name)}" data-desc="${escapeAttr(g.description || '')}" data-url="${escapeAttr(g.url || '')}">Edit</button>
                   <button class="delete-gift-btn" data-id="${g.id}">Remove</button>
                 </div>
@@ -1410,8 +1410,8 @@ body {
     .view-user-list-btn { background-color: #f1c40f; color: #2c3e50; margin-bottom: 5px; }
     .toggle-purchased-btn.mark { background-color: #28a745; color: white; font-size: 0.8em; padding: 6px 10px; }
     .toggle-purchased-btn.unmark { background-color: #dc3545; color: white; font-size: 0.8em; padding: 6px 10px; }
-    .edit-gift-btn { background-color: #1976d2; color: white; font-size: 0.9em; padding: 8px 12px; }
-    .delete-gift-btn { background-color: #e53935; color: white; font-size: 0.9em; padding: 8px 12px; }
+    .edit-gift-btn { background-color: #1976d2; color: white; font-size: 0.8em; padding: 6px 10px; }
+    .delete-gift-btn { background-color: #e53935; color: white; font-size: 0.8em; padding: 6px 10px; }
 
     #authForm button:hover, #addGiftForm button:hover, #signOutButton:hover, 
     .view-user-list-btn:hover, .toggle-purchased-btn:hover, .edit-gift-btn:hover, .delete-gift-btn:hover { 
