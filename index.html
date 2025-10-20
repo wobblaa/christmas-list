@@ -811,22 +811,77 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
 
         usersWithLabels.sort((a, b) => a._label.toLowerCase().localeCompare(b._label.toLowerCase()));
 
+
         if (usersWithLabels.length === 0) {
           otherUsersListElement.innerHTML = '<p>No other family members found yet.</p>';
           return;
         }
 
-        let html = "<h3>View Other Family Members' Lists:</h3><ul>";
-        for (const u of usersWithLabels) {
-          html += `<li><button class="view-user-list-btn" data-uid="${u.uid}" data-name="${u._label}">${u._label}</button></li>`;
-        }
-        html += '</ul>';
+        let html = `
+          <h3>View Other Family Members' Lists:</h3>
+          <!-- Updated: ${new Date().toISOString()} -->
+          <div class="christmas-tree-container">
+            <div class="christmas-tree">
+                <img src="tree2.png" alt="Christmas Tree" class="tree-image">
+            </div>
+            <div class="ornaments-container">`;
+        
+        // Create ornaments for each family member with natural scattering
+        const ornamentColors = ['#ff4d4d', '#ffd166', '#6ee7b7', '#60a5fa', '#f472b6', '#ff9f40', '#9b59b6', '#e74c3c'];
+        
+        // Define positions for ornaments on the tree (works for any number of users)
+        const naturalPositions = [
+          { top: '270.48px', left: '256.19px' },   // Position 0
+          { top: '286.48px', left: '171.19px' },   // Position 1
+          { top: '154.48px', left: '182.19px' },   // Position 2
+          { top: '206.48px', left: '132.19px' },   // Position 3
+          { top: '334.48px', left: '99.19px' },    // Position 4
+          { top: '359.48px', left: '276.19px' },   // Position 5
+          { top: '200.48px', left: '300.19px' },   // Position 6
+        ];
+
+        // Ornaments are now static with exact positions
+        
+        usersWithLabels.forEach((u, index) => {
+          const color = ornamentColors[index % ornamentColors.length];
+          const position = naturalPositions[index] || naturalPositions[index % naturalPositions.length];
+          
+          html += `
+            <div class="ornament" 
+                 data-uid="${u.uid}" 
+                 data-name="${u._label}"
+                 style="--ornament-color: ${color}; --top: ${position.top}; --left: ${position.left};">
+              <span class="ornament-text">${u._label}</span>
+            </div>`;
+        });
+
+        
+        html += `
+            </div>
+          </div>`;
+        
         otherUsersListElement.innerHTML = html;
 
-        document.querySelectorAll('.view-user-list-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.ornament').forEach(ornament => {
+          ornament.addEventListener('click', (e) => {
             const targetUid = e.currentTarget.dataset.uid;
             const targetName = e.currentTarget.dataset.name;
+            
+            // Debug: log ornament details
+            const computedStyle = window.getComputedStyle(e.currentTarget);
+            const top = computedStyle.getPropertyValue('--top');
+            const left = computedStyle.getPropertyValue('--left');
+            
+            // Find which position number this corresponds to
+            const positionIndex = naturalPositions.findIndex(pos => 
+              pos.top === top && pos.left === left
+            );
+            const positionNumber = positionIndex !== -1 ? positionIndex : 'Dynamic';
+            
+            console.log(`Clicked ornament: "${targetName}"`);
+            console.log(`Position ${positionNumber}: top: ${top}, left: ${left}`);
+            console.log(`UID: ${targetUid}`);
+            
             displayOtherUserGifts(targetUid, targetName);
           });
         });
@@ -1578,6 +1633,103 @@ body {
     .gift-content {
       flex: 1;
       min-width: 0;
+    }
+
+    /* ===== CHRISTMAS TREE ===== */
+    .christmas-tree-container {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 500px;
+      margin: 20px 0;
+      padding: 20px;
+    }
+
+    .christmas-tree {
+      position: relative;
+      width: 400px;
+      height: 500px;
+    }
+
+    .tree-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    }
+
+    .ornaments-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+    }
+
+    .ornament {
+      position: absolute;
+      width: 50px;
+      height: 60px;
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; /* Bulb shape */
+      background: var(--ornament-color);
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      cursor: pointer;
+      pointer-events: all;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+      animation: gentle-swing 4s ease-in-out infinite;
+      top: var(--top, 0);
+      left: var(--left, 0);
+      z-index: 10;
+    }
+
+    .ornament:hover {
+      transform: scale(1.15);
+      box-shadow: 0 5px 10px rgba(0, 0, 0, 0.4), 0 0 15px var(--ornament-color);
+      animation-play-state: paused;
+    }
+
+    .ornament-text {
+      color: white;
+      font-weight: bold;
+      font-size: 9px;
+      text-align: center;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+      line-height: 1.1;
+      padding: 2px;
+    }
+
+    /* Add a small cap/top to the ornament */
+    .ornament::before {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 8px;
+      background: #8B4513;
+      border-radius: 3px 3px 0 0;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+
+    /* Ornaments now use direct pixel positioning via CSS variables */
+
+    /* Add some variation to prevent perfect alignment */
+    .ornament:nth-child(odd):not([style*="--side: center"]) { transform: rotate(-1deg); }
+    .ornament:nth-child(even):not([style*="--side: center"]) { transform: rotate(1deg); }
+    .ornament[style*="--side: center"]:nth-child(odd) { transform: translateX(-50%) rotate(-1deg); }
+    .ornament[style*="--side: center"]:nth-child(even) { transform: translateX(-50%) rotate(1deg); }
+
+    @keyframes gentle-swing {
+      0%, 100% { transform: rotate(-1deg); }
+      50% { transform: rotate(1deg); }
     }
 
     /* ===== MY PURCHASES ===== */
