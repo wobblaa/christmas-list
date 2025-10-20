@@ -29,6 +29,134 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
+    // ===== LANGUAGE DATA =====
+    const LANGUAGES = {
+      en: {
+        // Header
+        'welcomeHeader': 'Welcome to the Family Gift List!',
+        'signOut': 'Sign Out',
+        'checkingAuth': 'Checking authentication status...',
+        'signedInAs': 'Signed in as:',
+        'noUserSignedIn': 'No user signed in.',
+        'firstNameToLogin': 'First name (to log in)',
+        'firstNameDisplayLogin': 'First name (display & login)',
+        
+        // Auth
+        'welcome': 'Welcome',
+        'haveAccount': 'I have an account',
+        'createAccount': 'Create new account',
+        'email': 'Email',
+        'password': 'Password',
+        'signIn': 'Sign In',
+        'createAccountBtn': 'Create Account',
+        'forgotPassword': 'Forgot password?',
+        'resetPassword': 'Reset Password',
+        'sendReset': 'Send Reset Email',
+        'backToSignIn': 'Back to Sign In',
+        
+        // Gift Form
+        'addGiftTitle': 'Add a New Gift to Your List',
+        'giftName': 'Gift Name',
+        'description': 'Description',
+        'url': 'URL (optional)',
+        'addGift': 'Add Gift',
+        
+        // Gift List
+        'yourGiftList': 'Your Gift List (drag to reorder by preference)',
+        'edit': 'Edit',
+        'remove': 'Remove',
+        'markPurchased': 'Mark Purchased',
+        'unmarkPurchased': 'Unmark Purchased',
+        'showDescription': 'Description',
+        'hideDescription': 'Hide Description',
+        
+        // Other Users
+        'viewOtherLists': 'View Other Family Members\' Lists:',
+        
+        // My Purchases
+        'myPurchases': 'My Purchases',
+        'giftsFor': 'Gifts for',
+        
+        // Messages
+        'giftAdded': 'Gift added successfully!',
+        'giftUpdated': 'Gift updated successfully!',
+        'giftDeleted': 'Gift deleted successfully!',
+        'giftPurchased': 'Gift marked as purchased!',
+        'giftUnpurchased': 'Gift unmarked as purchased!',
+        'errorOccurred': 'An error occurred. Please try again.',
+        'signInRequired': 'Please sign in to add gifts.',
+        'signInToView': 'Please sign in to view gift lists.',
+        'loadingGifts': 'Loading gifts...',
+        'noGifts': 'No gifts found.',
+        'loadingPurchases': 'Loading your purchases...',
+        'noPurchases': 'No purchases found.',
+        'errorLoadingPurchases': 'Error loading your purchases. Please try again.'
+      },
+      fr: {
+        // Header
+        'welcomeHeader': 'Bienvenue à la Liste de Cadeaux Familiale!',
+        'signOut': 'Se Déconnecter',
+        'checkingAuth': 'Vérification du statut d\'authentification...',
+        'signedInAs': 'Connecté en tant que:',
+        'noUserSignedIn': 'Aucun utilisateur connecté.',
+        'firstNameToLogin': 'Prénom (pour se connecter)',
+        'firstNameDisplayLogin': 'Prénom (affichage et connexion)',
+        
+        // Auth
+        'welcome': 'Bienvenue',
+        'haveAccount': 'J\'ai un compte',
+        'createAccount': 'Créer un nouveau compte',
+        'email': 'Courriel',
+        'password': 'Mot de passe',
+        'signIn': 'Se Connecter',
+        'createAccountBtn': 'Créer un Compte',
+        'forgotPassword': 'Mot de passe oublié?',
+        'resetPassword': 'Réinitialiser le Mot de Passe',
+        'sendReset': 'Envoyer l\'Email de Réinitialisation',
+        'backToSignIn': 'Retour à la Connexion',
+        
+        // Gift Form
+        'addGiftTitle': 'Ajouter un Nouveau Cadeau à Votre Liste',
+        'giftName': 'Nom du Cadeau',
+        'description': 'Description',
+        'url': 'URL (optionnel)',
+        'addGift': 'Ajouter le Cadeau',
+        
+        // Gift List
+        'yourGiftList': 'Votre Liste de Cadeaux (glisser pour réorganiser par préférence)',
+        'edit': 'Modifier',
+        'remove': 'Supprimer',
+        'markPurchased': 'Marquer Acheté',
+        'unmarkPurchased': 'Démarquer Acheté',
+        'showDescription': 'Description',
+        'hideDescription': 'Masquer Description',
+        
+        // Other Users
+        'viewOtherLists': 'Voir les Listes des Autres Membres de la Famille:',
+        
+        // My Purchases
+        'myPurchases': 'Mes Achats',
+        'giftsFor': 'Cadeaux pour',
+        
+        // Messages
+        'giftAdded': 'Cadeau ajouté avec succès!',
+        'giftUpdated': 'Cadeau mis à jour avec succès!',
+        'giftDeleted': 'Cadeau supprimé avec succès!',
+        'giftPurchased': 'Cadeau marqué comme acheté!',
+        'giftUnpurchased': 'Cadeau démarqué comme acheté!',
+        'errorOccurred': 'Une erreur s\'est produite. Veuillez réessayer.',
+        'signInRequired': 'Veuillez vous connecter pour ajouter des cadeaux.',
+        'signInToView': 'Veuillez vous connecter pour voir les listes de cadeaux.',
+        'loadingGifts': 'Chargement des cadeaux...',
+        'noGifts': 'Aucun cadeau trouvé.',
+        'loadingPurchases': 'Chargement de vos achats...',
+        'noPurchases': 'Aucun achat trouvé.',
+        'errorLoadingPurchases': 'Erreur lors du chargement de vos achats. Veuillez réessayer.'
+      }
+    };
+
+    let currentLanguage = 'en';
+
     // ===== DOMAIN COLORS DATA =====
     const DOMAIN_COLORS = {
       'amazon': '#ff9900',
@@ -239,9 +367,18 @@
       signOutButton.addEventListener('click', handleSignOut);
       addGiftForm.addEventListener('submit', handleAddGift);
       forgotPasswordLink.addEventListener('click', handleForgotPassword);
+      
+      // Language toggle
+      const languageToggle = document.getElementById('languageToggle');
+      if (languageToggle) {
+        languageToggle.addEventListener('click', switchLanguage);
+      }
 
       // Default to Sign In view
       updateAuthUI();
+
+      // Initialize language
+      updateLanguage();
 
       // Auth state
       onAuthStateChanged(auth, async (user) => {
@@ -268,7 +405,7 @@ if (!name) {
 }
 if (!name) name = user.email.split('@')[0];
 
-authStatusTextElement.textContent = `Signed in as: ${name}`;
+authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${name}`;
 
 
             authFormElement.style.display = 'none';
@@ -285,7 +422,7 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
             await displayOtherUsers(currentUserUid);
           } else {
             currentUserUid = null;
-            authStatusTextElement.textContent = 'No user signed in.';
+            authStatusTextElement.textContent = LANGUAGES[currentLanguage].noUserSignedIn;
             authFormElement.style.display = 'block';
             signOutButton.style.display = 'none';
             addGiftForm.style.display = 'none';
@@ -498,7 +635,7 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
     function displayUserGifts(userUid) {
       if (ownerGiftsUnsub) ownerGiftsUnsub();
 
-      giftListDisplayElement.innerHTML = "<h3>Loading your gift list...</h3>";
+      giftListDisplayElement.innerHTML = `<h3>${LANGUAGES[currentLanguage].loadingGifts}</h3>`;
 
       const qRef = query(collection(db, 'giftItems'), where('listOwnerId', '==', userUid));
       ownerGiftsUnsub = onSnapshot(
@@ -512,13 +649,13 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
           ownerGiftsCache = gifts.slice();
 
           if (gifts.length === 0) {
-            giftListDisplayElement.innerHTML = "<h3>No gifts found for you! Start adding some.</h3>";
+            giftListDisplayElement.innerHTML = `<h3>${LANGUAGES[currentLanguage].noGifts}</h3>`;
             return;
           }
 
           let html = `
             <div style="display:flex; align-items:center; gap:8px; justify-content:space-between;">
-              <h3 style="margin:0;">Your Gift List (drag to reorder by preference)</h3>
+              <h3 style="margin:0;">${LANGUAGES[currentLanguage].yourGiftList}</h3>
             </div>
             <ul>`;
           for (const g of gifts) {
@@ -536,7 +673,7 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
                   </div>
                   ${hasDescription ? `
                     <div class="description-link" onclick="toggleGiftDescription('${descriptionId}')">
-                      <span class="desc-toggle-text">Description</span>
+                      <span class="desc-toggle-text">${LANGUAGES[currentLanguage].showDescription}</span>
                       <span class="desc-toggle-icon">▼</span>
                     </div>
                     <div id="${descriptionId}" class="gift-description" style="display: none;">
@@ -545,14 +682,17 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
                   ` : '<div style="height: 20px;"></div>'}
                 </div>
                 <div style="margin-top:6px; display:flex; gap:3px; flex-wrap:wrap; align-items:center;">
-                  <button class="edit-gift-btn" data-id="${g.id}" data-name="${escapeAttr(g.name)}" data-desc="${escapeAttr(g.description || '')}" data-url="${escapeAttr(g.url || '')}" style="margin-right: -2px;">Edit</button>
-                  <button class="delete-gift-btn" data-id="${g.id}">Remove</button>
+                  <button class="edit-gift-btn" data-id="${g.id}" data-name="${escapeAttr(g.name)}" data-desc="${escapeAttr(g.description || '')}" data-url="${escapeAttr(g.url || '')}" style="margin-right: -2px;">${LANGUAGES[currentLanguage].edit}</button>
+                  <button class="delete-gift-btn" data-id="${g.id}">${LANGUAGES[currentLanguage].remove}</button>
                 </div>
               </li>
             `;
           }
           html += "</ul>";
           giftListDisplayElement.innerHTML = html;
+
+          // Update language for dynamically generated content
+          updateDynamicContent();
 
           // Wire owner edit/remove buttons
           document.querySelectorAll('.edit-gift-btn').forEach(btn => {
@@ -826,7 +966,7 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
       if (otherUserGiftsUnsub) otherUserGiftsUnsub();
 
       viewOtherUserGiftsContainer.style.display = 'block';
-      viewOtherUserGiftsContainer.innerHTML = `<h3>Loading ${targetLabel}'s gifts...</h3>`;
+      viewOtherUserGiftsContainer.innerHTML = `<h3>${LANGUAGES[currentLanguage].loadingGifts}</h3>`;
       
       // Auto-scroll to bring the gift list into view
       setTimeout(() => {
@@ -880,9 +1020,9 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
           const linkHtml = g.url ? ` <span>${renderGiftLink(g.url)}</span>` : '';
           let btn = '';
           if (!g.isPurchased) {
-            btn = `<button class="toggle-purchased-btn mark" data-gift-id="${g.id}" data-target-uid="${targetUid}" data-target-label="${targetLabel}" data-is-purchased="false">Mark Purchased</button>`;
+            btn = `<button class="toggle-purchased-btn mark" data-gift-id="${g.id}" data-target-uid="${targetUid}" data-target-label="${targetLabel}" data-is-purchased="false">${LANGUAGES[currentLanguage].markPurchased}</button>`;
           } else if (g.purchasedByUid === currentUserUid) {
-            btn = `<button class="toggle-purchased-btn unmark" data-gift-id="${g.id}" data-target-uid="${targetUid}" data-target-label="${targetLabel}" data-is-purchased="true">Unmark Purchased</button>`;
+            btn = `<button class="toggle-purchased-btn unmark" data-gift-id="${g.id}" data-target-uid="${targetUid}" data-target-label="${targetLabel}" data-is-purchased="true">${LANGUAGES[currentLanguage].unmarkPurchased}</button>`;
           }
           const hasDescription = g.description && g.description.trim();
           const descriptionId = `desc-${g.id}`;
@@ -896,7 +1036,7 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
                 </div>
                 ${hasDescription ? `
                   <div class="description-link" onclick="toggleGiftDescription('${descriptionId}')">
-                    <span class="desc-toggle-text">Description</span>
+                    <span class="desc-toggle-text">${LANGUAGES[currentLanguage].showDescription}</span>
                     <span class="desc-toggle-icon">▼</span>
                   </div>
                   <div id="${descriptionId}" class="gift-description" style="display: none;">
@@ -911,6 +1051,9 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
         }
         html += '</ul>';
         viewOtherUserGiftsContainer.innerHTML = html;
+
+        // Update language for dynamically generated content
+        updateDynamicContent();
 
         document.querySelectorAll('.toggle-purchased-btn').forEach(btn => {
           btn.addEventListener('click', async (e) => {
@@ -987,6 +1130,254 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
       return String(str).replaceAll('"', '&quot;').replaceAll("'", '&#39;');
     }
 
+    // Language switching function
+    function switchLanguage() {
+      currentLanguage = currentLanguage === 'en' ? 'fr' : 'en';
+      updateLanguage();
+      // Also update dynamic content that might have been generated
+      setTimeout(() => updateDynamicContent(), 100);
+    }
+    
+    function updateDynamicContent() {
+      const lang = LANGUAGES[currentLanguage];
+      if (!lang) return;
+      
+      // Update all edit buttons
+      document.querySelectorAll('.edit-gift-btn').forEach(btn => {
+        btn.textContent = lang.edit;
+      });
+      
+      // Update all remove buttons
+      document.querySelectorAll('.delete-gift-btn').forEach(btn => {
+        btn.textContent = lang.remove;
+      });
+      
+      // Update all mark purchased buttons
+      document.querySelectorAll('.toggle-purchased-btn.mark').forEach(btn => {
+        btn.textContent = lang.markPurchased;
+      });
+      
+      // Update all unmark purchased buttons
+      document.querySelectorAll('.toggle-purchased-btn.unmark').forEach(btn => {
+        btn.textContent = lang.unmarkPurchased;
+      });
+      
+      // Update all unmark purchase buttons in My Purchases
+      document.querySelectorAll('.unmark-purchase-btn').forEach(btn => {
+        btn.textContent = lang.unmarkPurchased;
+      });
+      
+      // Update all description toggle buttons
+      document.querySelectorAll('.desc-toggle-text').forEach(btn => {
+        btn.textContent = lang.showDescription;
+      });
+      
+      // Update all gift list titles
+      document.querySelectorAll('#giftListDisplay h3').forEach(title => {
+        if (title.textContent.includes('Gift List') || title.textContent.includes('Liste de Cadeaux')) {
+          title.textContent = lang.yourGiftList;
+        }
+      });
+      
+      // Update all section titles
+      document.querySelectorAll('#otherUsersList h3').forEach(title => {
+        title.textContent = lang.viewOtherLists;
+      });
+      
+      document.querySelectorAll('#myPurchasesContainer h3').forEach(title => {
+        title.textContent = lang.myPurchases;
+      });
+      
+      // Update all "Gifts for" headings
+      document.querySelectorAll('.purchase-section h4').forEach(title => {
+        if (title.textContent.includes('Gifts for') || title.textContent.includes('Cadeaux pour')) {
+          const name = title.textContent.replace('Gifts for ', '').replace('Cadeaux pour ', '');
+          title.textContent = `${lang.giftsFor} ${name}`;
+        }
+      });
+      
+      // Update "Signed in as" text
+      const authStatusText = document.getElementById('authStatusText');
+      if (authStatusText && (authStatusText.textContent.includes('Signed in as:') || authStatusText.textContent.includes('Connecté en tant que:'))) {
+        const name = authStatusText.textContent.replace('Signed in as: ', '').replace('Connecté en tant que: ', '');
+        authStatusText.textContent = `${lang.signedInAs} ${name}`;
+      } else if (authStatusText && (authStatusText.textContent.includes('Checking authentication status') || authStatusText.textContent.includes('Vérification du statut'))) {
+        authStatusText.textContent = lang.checkingAuth;
+      } else if (authStatusText && (authStatusText.textContent.includes('No user signed in') || authStatusText.textContent.includes('Aucun utilisateur connecté'))) {
+        authStatusText.textContent = lang.noUserSignedIn;
+      }
+      
+      // Update first name input placeholder
+      const firstNameInput = document.getElementById('firstNameInput');
+      if (firstNameInput) {
+        firstNameInput.placeholder = (authMode === 'signin') ? lang.firstNameToLogin : lang.firstNameDisplayLogin;
+      }
+      
+      // Update password input placeholder
+      const passwordInput = document.getElementById('passwordInput');
+      if (passwordInput) {
+        passwordInput.placeholder = lang.password;
+      }
+      
+      // Update sign in button text
+      const signInButton = document.getElementById('signInButton');
+      if (signInButton) {
+        signInButton.textContent = lang.signIn;
+      }
+      
+      // Update sign up button text
+      const signUpButton = document.getElementById('signUpButton');
+      if (signUpButton) {
+        signUpButton.textContent = lang.createAccountBtn;
+      }
+      
+      // Update forgot password link text
+      const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+      if (forgotPasswordLink) {
+        forgotPasswordLink.textContent = lang.forgotPassword;
+      }
+      
+      // Recreate Christmas header effect
+      createChristmasHeader();
+    }
+
+    function updateLanguage() {
+      const lang = LANGUAGES[currentLanguage];
+      if (!lang) return; // Safety check
+      
+      // Prevent infinite loops by checking if we're already updating
+      if (window.isUpdatingLanguage) return;
+      window.isUpdatingLanguage = true;
+      
+      // Use requestAnimationFrame to ensure DOM is ready
+      requestAnimationFrame(() => {
+      
+      // Update header
+      const christmasHeader = document.getElementById('christmasHeader');
+      if (christmasHeader) {
+        christmasHeader.textContent = lang.welcomeHeader;
+        // Recreate the Christmas header effect with alternating colors
+        createChristmasHeader();
+      }
+      
+      // Update auth status only if it's the checking message
+      const authStatusText = document.getElementById('authStatusText');
+      if (authStatusText && (authStatusText.textContent.includes('Checking authentication status') || authStatusText.textContent.includes('Vérification du statut'))) {
+        authStatusText.textContent = lang.checkingAuth;
+      }
+      
+      // Update sign out button
+      const signOutButton = document.getElementById('signOutButton');
+      if (signOutButton) {
+        signOutButton.textContent = lang.signOut;
+      }
+      
+      // Update language toggle button
+      const languageToggle = document.getElementById('languageToggle');
+      if (languageToggle) {
+        languageToggle.textContent = currentLanguage === 'en' ? 'FR' : 'EN';
+      }
+      
+      // Update auth form
+      const welcomeH2 = document.querySelector('#authForm h2');
+      if (welcomeH2) {
+        welcomeH2.textContent = lang.welcome;
+      }
+      
+      const tabSignIn = document.getElementById('tabSignIn');
+      if (tabSignIn) {
+        tabSignIn.textContent = lang.haveAccount;
+      }
+      
+      const tabSignUp = document.getElementById('tabSignUp');
+      if (tabSignUp) {
+        tabSignUp.textContent = lang.createAccount;
+      }
+      
+      const emailLabel = document.querySelector('label[for="email"]');
+      if (emailLabel) {
+        emailLabel.textContent = lang.email;
+      }
+      
+      const passwordLabel = document.querySelector('label[for="password"]');
+      if (passwordLabel) {
+        passwordLabel.textContent = lang.password;
+      }
+      
+      const signInBtn = document.getElementById('signInBtn');
+      if (signInBtn) {
+        signInBtn.textContent = lang.signIn;
+      }
+      
+      const signUpBtn = document.getElementById('signUpBtn');
+      if (signUpBtn) {
+        signUpBtn.textContent = lang.createAccountBtn;
+      }
+      
+      const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+      if (forgotPasswordBtn) {
+        forgotPasswordBtn.textContent = lang.forgotPassword;
+      }
+      
+      const resetPasswordBtn = document.getElementById('resetPasswordBtn');
+      if (resetPasswordBtn) {
+        resetPasswordBtn.textContent = lang.sendReset;
+      }
+      
+      const backToSignInBtn = document.getElementById('backToSignInBtn');
+      if (backToSignInBtn) {
+        backToSignInBtn.textContent = lang.backToSignIn;
+      }
+      
+      // Update gift form
+      const addGiftTitle = document.getElementById('addGiftTitle');
+      if (addGiftTitle) {
+        addGiftTitle.textContent = lang.addGiftTitle;
+      }
+      
+      const giftNameInput = document.getElementById('giftNameInput');
+      if (giftNameInput) {
+        giftNameInput.placeholder = lang.giftName;
+      }
+      
+      const giftDescriptionInput = document.getElementById('giftDescriptionInput');
+      if (giftDescriptionInput) {
+        giftDescriptionInput.placeholder = lang.description;
+      }
+      
+      const giftUrlInput = document.getElementById('giftUrlInput');
+      if (giftUrlInput) {
+        giftUrlInput.placeholder = lang.url;
+      }
+      
+      const addGiftBtn = document.getElementById('addGiftButton');
+      if (addGiftBtn) {
+        addGiftBtn.textContent = lang.addGift;
+      }
+      
+      // Update gift list title
+      const giftListTitle = document.querySelector('#giftListDisplay h3');
+      if (giftListTitle) {
+        giftListTitle.textContent = lang.yourGiftList;
+      }
+      
+      // Update other users title
+      const otherUsersTitle = document.querySelector('#otherUsersList h3');
+      if (otherUsersTitle) {
+        otherUsersTitle.textContent = lang.viewOtherLists;
+      }
+      
+      // Update my purchases title
+      const myPurchasesTitle = document.querySelector('#myPurchasesContainer h3');
+      if (myPurchasesTitle) {
+        myPurchasesTitle.textContent = lang.myPurchases;
+      }
+      
+        // Clear the updating flag
+        window.isUpdatingLanguage = false;
+      });
+    }
+
     // Standardized error handling
     function showError(message, isAlert = true) {
       console.error(message);
@@ -1015,7 +1406,7 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
       if (emailInput) emailInput.style.display = (authMode === 'signup' ? 'block' : 'none');
       if (signInButton) signInButton.style.display = (authMode === 'signin' ? 'inline-block' : 'none');
       if (signUpButton) signUpButton.style.display = (authMode === 'signup' ? 'inline-block' : 'none');
-      if (firstNameInput) firstNameInput.placeholder = (authMode === 'signin') ? 'First name (to log in)' : 'First name (display & login)';
+      if (firstNameInput) firstNameInput.placeholder = (authMode === 'signin') ? LANGUAGES[currentLanguage].firstNameToLogin : LANGUAGES[currentLanguage].firstNameDisplayLogin;
     }
 
     // ===== CHRISTMAS HEADER EFFECT =====
@@ -1079,7 +1470,7 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
       }
       
       myPurchasesContainer.style.display = 'block';
-      myPurchasesContainer.innerHTML = '<h3>Loading your purchases...</h3>';
+      myPurchasesContainer.innerHTML = `<h3>${LANGUAGES[currentLanguage].loadingPurchases}</h3>`;
       
       try {
         // Query all gifts purchased by current user
@@ -1130,7 +1521,7 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
         for (const [ownerUid, gifts] of Object.entries(purchasesByOwner)) {
           const ownerName = ownerNames[ownerUid];
           html += `<div class="purchase-section">
-            <h4>${ownerName}'s Gifts</h4>
+            <h4>${LANGUAGES[currentLanguage].giftsFor} ${ownerName}</h4>
             <ul>`;
           
           for (const gift of gifts) {
@@ -1147,7 +1538,7 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
                   </div>
                   ${hasDescription ? `
                     <div class="description-link" onclick="toggleGiftDescription('${descriptionId}')">
-                      <span class="desc-toggle-text">Description</span>
+                      <span class="desc-toggle-text">${LANGUAGES[currentLanguage].showDescription}</span>
                       <span class="desc-toggle-icon">▼</span>
                     </div>
                     <div id="${descriptionId}" class="gift-description" style="display: none;">
@@ -1156,7 +1547,7 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
                   ` : '<div style="height: 20px;"></div>'}
                 </div>
                 <button class="unmark-purchase-btn" data-gift-id="${gift.id}" data-owner-uid="${ownerUid}" data-owner-name="${ownerName}">
-                  Unmark Purchased
+                  ${LANGUAGES[currentLanguage].unmarkPurchased}
                 </button>
               </li>`;
           }
@@ -1165,6 +1556,9 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
         }
         
         myPurchasesContainer.innerHTML = html;
+        
+        // Update language for dynamically generated content
+        updateDynamicContent();
         
         // Add event listeners for unmark buttons
         document.querySelectorAll('.unmark-purchase-btn').forEach(btn => {
@@ -1921,10 +2315,13 @@ body {
 </head>
 <body>
 <div class="content-pane"><div class="content-inner">
-  <h1 id="christmasHeader">Welcome to the Family Gift List!</h1>
+  <h1 id="christmasHeader" style="text-align: center; margin-bottom: 20px;">Welcome to the Family Gift List!</h1>
   <div id="authStatus">
     <span id="authStatusText">Checking authentication status...</span>
-    <button id="signOutButton" style="display:none;">Sign Out</button>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <button id="languageToggle" style="background: linear-gradient(45deg, #ff6b6b, #4ecdc4); color: white; border: none; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 0.9em;">FR</button>
+      <button id="signOutButton" style="display:none;">Sign Out</button>
+    </div>
   </div>
 
   <div id="authForm">
@@ -1945,7 +2342,7 @@ body {
 
 
   <form id="addGiftForm">
-    <h2>Add a New Gift to Your List</h2>
+    <h2 id="addGiftTitle">Add a New Gift to Your List</h2>
     <input type="text" id="giftNameInput" placeholder="Gift Name" maxlength="20" required>
     <textarea id="giftDescriptionInput" placeholder="Description"></textarea>
     <input type="url" id="giftUrlInput" placeholder="Link to the item (optional)">
