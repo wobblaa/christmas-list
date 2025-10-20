@@ -518,7 +518,7 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
 
           let html = `
             <div style="display:flex; align-items:center; gap:8px; justify-content:space-between;">
-              <h3 style="margin:0;">Your Gift List</h3>
+              <h3 style="margin:0;">Your Gift List (drag to reorder by preference)</h3>
             </div>
             <ul>`;
           for (const g of gifts) {
@@ -584,38 +584,6 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
       );
     }
 
-    async function moveGift(giftId, delta) {
-      if (!currentUserUid) return;
-      // Find current and neighbor in cache (already sorted by orderIndex ASC)
-      const idx = ownerGiftsCache.findIndex(g => g.id === giftId);
-      if (idx === -1) return;
-      const neighborIdx = idx + delta;
-      if (neighborIdx < 0 || neighborIdx >= ownerGiftsCache.length) return; // no-op at edges
-
-      const cur = ownerGiftsCache[idx];
-      const neighbor = ownerGiftsCache[neighborIdx];
-      const curRef = doc(db, 'giftItems', cur.id);
-      const neighborRef = doc(db, 'giftItems', neighbor.id);
-
-      try {
-        await runTransaction(db, async (tx) => {
-          const curSnap = await tx.get(curRef);
-          const neighSnap = await tx.get(neighborRef);
-          const curOrder = (curSnap.data().orderIndex ?? 0);
-          const neighOrder = (neighSnap.data().orderIndex ?? 0);
-
-          // only allow owner to reorder their own
-          if (curSnap.data().listOwnerId !== currentUserUid || neighSnap.data().listOwnerId !== currentUserUid) {
-            throw new Error('Not your gift to reorder.');
-          }
-
-          tx.update(curRef, { orderIndex: neighOrder });
-          tx.update(neighborRef, { orderIndex: curOrder });
-        });
-      } catch (err) {
-        showError(`Failed to move item: ${err.message}`);
-      }
-    }
 
     // ===== DRAG AND DROP FUNCTIONALITY =====
     function setupDragAndDrop() {
@@ -819,7 +787,6 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
 
         let html = `
           <h3>View Other Family Members' Lists:</h3>
-          <!-- Updated: ${new Date().toISOString()} -->
           <div class="christmas-tree-container">
             <div class="christmas-tree">
                 <img src="tree2.png" alt="Christmas Tree" class="tree-image">
@@ -866,22 +833,6 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
           ornament.addEventListener('click', (e) => {
             const targetUid = e.currentTarget.dataset.uid;
             const targetName = e.currentTarget.dataset.name;
-            
-            // Debug: log ornament details
-            const computedStyle = window.getComputedStyle(e.currentTarget);
-            const top = computedStyle.getPropertyValue('--top');
-            const left = computedStyle.getPropertyValue('--left');
-            
-            // Find which position number this corresponds to
-            const positionIndex = naturalPositions.findIndex(pos => 
-              pos.top === top && pos.left === left
-            );
-            const positionNumber = positionIndex !== -1 ? positionIndex : 'Dynamic';
-            
-            console.log(`Clicked ornament: "${targetName}"`);
-            console.log(`Position ${positionNumber}: top: ${top}, left: ${left}`);
-            console.log(`UID: ${targetUid}`);
-            
             displayOtherUserGifts(targetUid, targetName);
           });
         });
@@ -982,12 +933,9 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
         html += '</ul>';
         viewOtherUserGiftsContainer.innerHTML = html;
 
-
         document.querySelectorAll('.toggle-purchased-btn').forEach(btn => {
           btn.addEventListener('click', async (e) => {
             const giftId = e.currentTarget.dataset.giftId;
-            const ownerLabel = e.currentTarget.dataset.targetLabel;
-            const isPurchased = e.currentTarget.dataset.isPurchased === 'true';
             await toggleGiftPurchasedStatus(giftId);
           });
         });
@@ -1077,32 +1025,6 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
       }
     }
 
-    // Performance optimization: Debounce function for rapid user interactions
-    function debounce(func, wait) {
-      let timeout;
-      return function executedFunction(...args) {
-        const later = () => {
-          clearTimeout(timeout);
-          func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-      };
-    }
-
-    // Performance optimization: Throttle function for scroll/resize events
-    function throttle(func, limit) {
-      let inThrottle;
-      return function() {
-        const args = arguments;
-        const context = this;
-        if (!inThrottle) {
-          func.apply(context, args);
-          inThrottle = true;
-          setTimeout(() => inThrottle = false, limit);
-        }
-      };
-    }
 
     // ===== AUTH UI TOGGLE FUNCTIONS =====
     let authMode = 'signin'; // 'signin' | 'signup'
@@ -1293,21 +1215,7 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
 
     // ===== DEVELOPMENT/DEBUG FUNCTIONS =====
     function _runSelfTests() {
-      // Owner reorder simulation
-      const list = [
-        { id: '1', orderIndex: 1 },
-        { id: '2', orderIndex: 2 },
-        { id: '3', orderIndex: 3 },
-      ];
-      const move = (arr, i, d) => {
-        const j = i + d; if (j < 0 || j >= arr.length) return arr;
-        const a = arr[i].orderIndex, b = arr[j].orderIndex;
-        arr[i].orderIndex = b; arr[j].orderIndex = a; return arr;
-      };
-      console.assert(move(JSON.parse(JSON.stringify(list)), 2, -1)[1].orderIndex === 3, 'Swap up failed');
-      console.assert(move(JSON.parse(JSON.stringify(list)), 1, +1)[2].orderIndex === 2, 'Swap down failed');
-
-      // URL helpers
+      // URL helpers validation
       console.assert(sanitizeUrl('example.com') === 'https://example.com', 'sanitizeUrl should add protocol');
       console.assert(sanitizeUrl('https://x.com') === 'https://x.com', 'sanitizeUrl should keep protocol');
     }
@@ -1473,34 +1381,6 @@ body {
       opacity: .9; 
     }
 
-    /* ===== DESCRIPTION TOGGLE ===== */
-    .description-toggle {
-      background-color: #6c757d;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 16px;
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-      transition: background-color 0.2s ease;
-    }
-
-    .description-toggle:hover {
-      background-color: #5a6268;
-    }
-
-    .description-container {
-      margin-bottom: 15px;
-    }
-
-    #descriptionInputContainer {
-      margin-top: 10px;
-    }
 
     /* ===== GIFT DESCRIPTION LINK ===== */
     .description-link {
@@ -1559,7 +1439,6 @@ body {
       list-style-type: none;
       padding: 0;
     }
-
 
     #giftListDisplay li > div:first-child {
       max-width: 20ch;
@@ -1719,13 +1598,9 @@ body {
     }
 
 
-    /* Ornaments now use direct pixel positioning via CSS variables */
-
     /* Add some variation to prevent perfect alignment */
-    .ornament:nth-child(odd):not([style*="--side: center"]) { transform: rotate(-1deg); }
-    .ornament:nth-child(even):not([style*="--side: center"]) { transform: rotate(1deg); }
-    .ornament[style*="--side: center"]:nth-child(odd) { transform: translateX(-50%) rotate(-1deg); }
-    .ornament[style*="--side: center"]:nth-child(even) { transform: translateX(-50%) rotate(1deg); }
+    .ornament:nth-child(odd) { transform: rotate(-1deg); }
+    .ornament:nth-child(even) { transform: rotate(1deg); }
 
     @keyframes gentle-swing {
       0%, 100% { transform: rotate(-1deg); }
