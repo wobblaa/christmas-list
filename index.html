@@ -1537,10 +1537,11 @@ body {
       justify-content: center;
       box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
       transition: all 0.3s ease;
-      animation: gentle-swing 4s ease-in-out infinite;
+      animation: gentle-swing 2s ease-in-out infinite;
       position: relative;
       padding: 0;
       margin: 0 auto;
+      transform-origin: top center;
     }
 
     .ornament-button:hover {
@@ -1578,8 +1579,8 @@ body {
     .ornament-button:nth-child(even) { transform: rotate(1deg); }
 
     @keyframes gentle-swing {
-      0%, 100% { transform: rotate(-1deg); }
-      50% { transform: rotate(1deg); }
+      0%, 100% { transform: rotate(-8deg); }
+      50% { transform: rotate(8deg); }
     }
 
     /* ===== MY PURCHASES ===== */
