@@ -1290,11 +1290,33 @@ body {
 
     .content-inner {
       max-width: 980px;
+      width: 100%;
       margin: 0 auto;
       padding: 0 20px;
       box-sizing: border-box;
       position: relative;
       z-index: 10001;
+    }
+
+    /* ===== MOBILE RESPONSIVENESS ===== */
+    @media (max-width: 768px) {
+      .content-pane {
+        left: 12px;
+        right: 12px;
+        top: 12px;
+        bottom: 12px;
+        padding: 8px 0;
+      }
+      
+      .content-inner {
+        padding: 0 10px;
+        max-width: none;
+      }
+      
+      #authForm, #addGiftForm, #otherUsersList, #viewOtherUserGiftsContainer, #giftListDisplay, #myPurchasesContainer {
+        margin-bottom: 15px;
+        padding: 15px;
+      }
     }
 
     /* ===== CARD COMPONENTS ===== */
@@ -1715,6 +1737,19 @@ body {
       animation: twinkle 0.8s ease-in-out infinite;
     }
 
+    @media (max-width: 768px) {
+      body::before {
+        height: 12px;
+        background:
+          radial-gradient(circle at 10% 50%, #ff4d4d 0 3px, transparent 4px) 0 0/60px 12px,
+          radial-gradient(circle at 30% 50%, #ffd166 0 3px, transparent 4px) 0 0/60px 12px,
+          radial-gradient(circle at 50% 50%, #6ee7b7 0 3px, transparent 4px) 0 0/60px 12px,
+          radial-gradient(circle at 70% 50%, #60a5fa 0 3px, transparent 4px) 0 0/60px 12px,
+          radial-gradient(circle at 90% 50%, #f472b6 0 3px, transparent 4px) 0 0/60px 12px,
+          linear-gradient(#2b364a, #2b364a) 0 6px/100% 1px repeat-x;
+      }
+    }
+
     /* Right border */
     body::after {
       content: "";
@@ -1733,6 +1768,19 @@ body {
         radial-gradient(circle at 50% 90%, #f472b6 0 4px, transparent 5px) 0 0/24px 80px,
         linear-gradient(#2b364a, #2b364a) 12px 0/2px 100% repeat-y;
       animation: twinkle 0.8s ease-in-out infinite;
+    }
+
+    @media (max-width: 768px) {
+      body::after {
+        width: 12px;
+        background:
+          radial-gradient(circle at 50% 10%, #ff4d4d 0 3px, transparent 4px) 0 0/12px 60px,
+          radial-gradient(circle at 50% 30%, #ffd166 0 3px, transparent 4px) 0 0/12px 60px,
+          radial-gradient(circle at 50% 50%, #6ee7b7 0 3px, transparent 4px) 0 0/12px 60px,
+          radial-gradient(circle at 50% 70%, #60a5fa 0 3px, transparent 4px) 0 0/12px 60px,
+          radial-gradient(circle at 50% 90%, #f472b6 0 3px, transparent 4px) 0 0/12px 60px,
+          linear-gradient(#2b364a, #2b364a) 6px 0/1px 100% repeat-y;
+      }
     }
 
     /* Bottom border */
@@ -1755,6 +1803,19 @@ body {
       animation: twinkle 0.8s ease-in-out infinite;
     }
 
+    @media (max-width: 768px) {
+      html::before {
+        height: 12px;
+        background:
+          radial-gradient(circle at 10% 50%, #ff4d4d 0 3px, transparent 4px) 0 0/60px 12px,
+          radial-gradient(circle at 30% 50%, #ffd166 0 3px, transparent 4px) 0 0/60px 12px,
+          radial-gradient(circle at 50% 50%, #6ee7b7 0 3px, transparent 4px) 0 0/60px 12px,
+          radial-gradient(circle at 70% 50%, #60a5fa 0 3px, transparent 4px) 0 0/60px 12px,
+          radial-gradient(circle at 90% 50%, #f472b6 0 3px, transparent 4px) 0 0/60px 12px,
+          linear-gradient(#2b364a, #2b364a) 0 6px/100% 1px repeat-x;
+      }
+    }
+
     /* Left border */
     html::after {
       content: "";
@@ -1773,6 +1834,19 @@ body {
         radial-gradient(circle at 50% 90%, #f472b6 0 4px, transparent 5px) 0 0/24px 80px,
         linear-gradient(#2b364a, #2b364a) 12px 0/2px 100% repeat-y;
       animation: twinkle 0.8s ease-in-out infinite;
+    }
+
+    @media (max-width: 768px) {
+      html::after {
+        width: 12px;
+        background:
+          radial-gradient(circle at 50% 10%, #ff4d4d 0 3px, transparent 4px) 0 0/12px 60px,
+          radial-gradient(circle at 50% 30%, #ffd166 0 3px, transparent 4px) 0 0/12px 60px,
+          radial-gradient(circle at 50% 50%, #6ee7b7 0 3px, transparent 4px) 0 0/12px 60px,
+          radial-gradient(circle at 50% 70%, #60a5fa 0 3px, transparent 4px) 0 0/12px 60px,
+          radial-gradient(circle at 50% 90%, #f472b6 0 3px, transparent 4px) 0 0/12px 60px,
+          linear-gradient(#2b364a, #2b364a) 6px 0/1px 100% repeat-y;
+      }
     }
 
     @keyframes twinkle {
