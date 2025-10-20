@@ -1659,6 +1659,13 @@ body {
       z-index: 3;
       display: flex;
       justify-content: center;
+      /* Hide scrollbar */
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* Internet Explorer 10+ */
+    }
+    
+    .content-pane::-webkit-scrollbar {
+      display: none; /* WebKit browsers (Chrome, Safari, Edge) */
     }
 
     .content-inner {
@@ -1674,10 +1681,10 @@ body {
     /* ===== MOBILE RESPONSIVENESS ===== */
     @media (max-width: 768px) {
       .content-pane {
-        left: 18px; /* 1.5x bigger: 12px * 1.5 = 18px */
-        right: 18px;
-        top: 18px;
-        bottom: 18px;
+        left: 24px; /* 2x bigger: 12px * 2 = 24px */
+        right: 24px;
+        top: 24px;
+        bottom: 24px;
         padding: 8px 0;
       }
       
@@ -2088,14 +2095,14 @@ body {
 
     @media (max-width: 768px) {
       body::before {
-        height: 18px; /* 1.5x bigger: 12px * 1.5 = 18px */
+        height: 24px; /* 2x bigger: 12px * 2 = 24px */
         background:
-          radial-gradient(circle at 10% 50%, #ff4d4d 0 4px, transparent 5px) 0 0/90px 18px,
-          radial-gradient(circle at 30% 50%, #ffd166 0 4px, transparent 5px) 0 0/90px 18px,
-          radial-gradient(circle at 50% 50%, #6ee7b7 0 4px, transparent 5px) 0 0/90px 18px,
-          radial-gradient(circle at 70% 50%, #60a5fa 0 4px, transparent 5px) 0 0/90px 18px,
-          radial-gradient(circle at 90% 50%, #f472b6 0 4px, transparent 5px) 0 0/90px 18px,
-          linear-gradient(#2b364a, #2b364a) 0 9px/100% 1px repeat-x;
+          radial-gradient(circle at 10% 50%, #ff4d4d 0 5px, transparent 6px) 0 0/120px 24px,
+          radial-gradient(circle at 30% 50%, #ffd166 0 5px, transparent 6px) 0 0/120px 24px,
+          radial-gradient(circle at 50% 50%, #6ee7b7 0 5px, transparent 6px) 0 0/120px 24px,
+          radial-gradient(circle at 70% 50%, #60a5fa 0 5px, transparent 6px) 0 0/120px 24px,
+          radial-gradient(circle at 90% 50%, #f472b6 0 5px, transparent 6px) 0 0/120px 24px,
+          linear-gradient(#2b364a, #2b364a) 0 12px/100% 1px repeat-x;
       }
     }
 
@@ -2108,7 +2115,7 @@ body {
       bottom: 0;
       width: 36px; /* 1.5x bigger */
       pointer-events: none;
-      z-index: 0;
+      z-index: 3;
       background:
         radial-gradient(circle at 50% 10%, #ff4d4d 0 6px, transparent 7px) 0 0/36px 120px,
         radial-gradient(circle at 50% 30%, #ffd166 0 6px, transparent 7px) 0 0/36px 120px,
@@ -2121,14 +2128,14 @@ body {
 
     @media (max-width: 768px) {
       body::after {
-        width: 18px; /* 1.5x bigger: 12px * 1.5 = 18px */
+        width: 24px; /* 2x bigger: 12px * 2 = 24px */
         background:
-          radial-gradient(circle at 50% 10%, #ff4d4d 0 4px, transparent 5px) 0 0/18px 90px,
-          radial-gradient(circle at 50% 30%, #ffd166 0 4px, transparent 5px) 0 0/18px 90px,
-          radial-gradient(circle at 50% 50%, #6ee7b7 0 4px, transparent 5px) 0 0/18px 90px,
-          radial-gradient(circle at 50% 70%, #60a5fa 0 4px, transparent 5px) 0 0/18px 90px,
-          radial-gradient(circle at 50% 90%, #f472b6 0 4px, transparent 5px) 0 0/18px 90px,
-          linear-gradient(#2b364a, #2b364a) 9px 0/1px 100% repeat-y;
+          radial-gradient(circle at 50% 10%, #ff4d4d 0 5px, transparent 6px) 0 0/24px 120px,
+          radial-gradient(circle at 50% 30%, #ffd166 0 5px, transparent 6px) 0 0/24px 120px,
+          radial-gradient(circle at 50% 50%, #6ee7b7 0 5px, transparent 6px) 0 0/24px 120px,
+          radial-gradient(circle at 50% 70%, #60a5fa 0 5px, transparent 6px) 0 0/24px 120px,
+          radial-gradient(circle at 50% 90%, #f472b6 0 5px, transparent 6px) 0 0/24px 120px,
+          linear-gradient(#2b364a, #2b364a) 12px 0/1px 100% repeat-y;
       }
     }
 
@@ -2141,7 +2148,7 @@ body {
       right: 0;
       height: 36px; /* 1.5x bigger */
       pointer-events: none;
-      z-index: 0;
+      z-index: 3;
       background:
         radial-gradient(circle at 10% 50%, #ff4d4d 0 6px, transparent 7px) 0 0/120px 36px,
         radial-gradient(circle at 30% 50%, #ffd166 0 6px, transparent 7px) 0 0/120px 36px,
@@ -2154,14 +2161,14 @@ body {
 
     @media (max-width: 768px) {
       html::before {
-        height: 18px; /* 1.5x bigger: 12px * 1.5 = 18px */
+        height: 24px; /* 2x bigger: 12px * 2 = 24px */
         background:
-          radial-gradient(circle at 10% 50%, #ff4d4d 0 4px, transparent 5px) 0 0/90px 18px,
-          radial-gradient(circle at 30% 50%, #ffd166 0 4px, transparent 5px) 0 0/90px 18px,
-          radial-gradient(circle at 50% 50%, #6ee7b7 0 4px, transparent 5px) 0 0/90px 18px,
-          radial-gradient(circle at 70% 50%, #60a5fa 0 4px, transparent 5px) 0 0/90px 18px,
-          radial-gradient(circle at 90% 50%, #f472b6 0 4px, transparent 5px) 0 0/90px 18px,
-          linear-gradient(#2b364a, #2b364a) 0 9px/100% 1px repeat-x;
+          radial-gradient(circle at 10% 50%, #ff4d4d 0 5px, transparent 6px) 0 0/120px 24px,
+          radial-gradient(circle at 30% 50%, #ffd166 0 5px, transparent 6px) 0 0/120px 24px,
+          radial-gradient(circle at 50% 50%, #6ee7b7 0 5px, transparent 6px) 0 0/120px 24px,
+          radial-gradient(circle at 70% 50%, #60a5fa 0 5px, transparent 6px) 0 0/120px 24px,
+          radial-gradient(circle at 90% 50%, #f472b6 0 5px, transparent 6px) 0 0/120px 24px,
+          linear-gradient(#2b364a, #2b364a) 0 12px/100% 1px repeat-x;
       }
     }
 
@@ -2174,7 +2181,7 @@ body {
       bottom: 0;
       width: 36px; /* 1.5x bigger */
       pointer-events: none;
-      z-index: 0;
+      z-index: 3;
       background:
         radial-gradient(circle at 50% 10%, #ff4d4d 0 6px, transparent 7px) 0 0/36px 120px,
         radial-gradient(circle at 50% 30%, #ffd166 0 6px, transparent 7px) 0 0/36px 120px,
@@ -2187,14 +2194,14 @@ body {
 
     @media (max-width: 768px) {
       html::after {
-        width: 18px; /* 1.5x bigger: 12px * 1.5 = 18px */
+        width: 24px; /* 2x bigger: 12px * 2 = 24px */
         background:
-          radial-gradient(circle at 50% 10%, #ff4d4d 0 4px, transparent 5px) 0 0/18px 90px,
-          radial-gradient(circle at 50% 30%, #ffd166 0 4px, transparent 5px) 0 0/18px 90px,
-          radial-gradient(circle at 50% 50%, #6ee7b7 0 4px, transparent 5px) 0 0/18px 90px,
-          radial-gradient(circle at 50% 70%, #60a5fa 0 4px, transparent 5px) 0 0/18px 90px,
-          radial-gradient(circle at 50% 90%, #f472b6 0 4px, transparent 5px) 0 0/18px 90px,
-          linear-gradient(#2b364a, #2b364a) 9px 0/1px 100% repeat-y;
+          radial-gradient(circle at 50% 10%, #ff4d4d 0 5px, transparent 6px) 0 0/24px 120px,
+          radial-gradient(circle at 50% 30%, #ffd166 0 5px, transparent 6px) 0 0/24px 120px,
+          radial-gradient(circle at 50% 50%, #6ee7b7 0 5px, transparent 6px) 0 0/24px 120px,
+          radial-gradient(circle at 50% 70%, #60a5fa 0 5px, transparent 6px) 0 0/24px 120px,
+          radial-gradient(circle at 50% 90%, #f472b6 0 5px, transparent 6px) 0 0/24px 120px,
+          linear-gradient(#2b364a, #2b364a) 12px 0/1px 100% repeat-y;
       }
     }
 
@@ -2238,11 +2245,13 @@ body {
     width: '100vw',
     height: '100vh',
     pointerEvents: 'none',
-    zIndex: 1
+    zIndex: 2
   });
 
   let w, h, flakes = [], targetCount = 0, anim;
+  let snowPile = []; // Array to store settled snow positions
   const DPR = window.devicePixelRatio || 1;
+  const MAX_PILE_HEIGHT = 200; // Maximum snow pile height in pixels
 
   function rand(min, max) { return Math.random() * (max - min) + min; }
 
@@ -2322,6 +2331,110 @@ body {
     ctx.restore();
   }
 
+  function addToSnowPile(x, size) {
+    // Add settled snow to the pile
+    snowPile.push({
+      x: x,
+      size: size,
+      settledTime: Date.now()
+    });
+    
+    // Keep only recent snow (last 30 seconds worth)
+    const now = Date.now();
+    snowPile = snowPile.filter(snow => now - snow.settledTime < 30000);
+  }
+
+  function drawSnowPile(ctx) {
+    if (snowPile.length === 0) return;
+    
+    // Get the content area boundaries (where content pane starts/ends)
+    const contentMargin = window.innerWidth <= 768 ? 24 : 36; // Match content-pane margins
+    const snowStartY = h - contentMargin; // Start snow pile from content area bottom
+    const snowStartX = contentMargin; // Start snow pile from content area left
+    const snowEndX = w - contentMargin; // End snow pile at content area right
+    
+    // Create a height map for the snow pile (only for content area width)
+    const contentWidth = Math.floor(snowEndX - snowStartX);
+    const heightMap = new Array(contentWidth).fill(0);
+    
+    // Calculate height at each x position (only within content area, with edge padding)
+    const edgePadding = 20; // Don't accumulate snow within 20px of edges
+    snowPile.forEach(snow => {
+      const x = Math.floor(snow.x);
+      const contentX = x - snowStartX; // Convert to content area coordinates
+      if (contentX >= edgePadding && contentX < contentWidth - edgePadding) {
+        heightMap[contentX] = Math.min(heightMap[contentX] + snow.size * 8.0, MAX_PILE_HEIGHT);
+      }
+    });
+    
+    // Ultra-ultra-smooth the height map for natural curves (many passes for extremely smooth result)
+    for (let pass = 0; pass < 20; pass++) {
+      for (let i = 8; i < heightMap.length - 8; i++) {
+        heightMap[i] = (
+          heightMap[i-8] * 0.01 + 
+          heightMap[i-7] * 0.01 + 
+          heightMap[i-6] * 0.02 + 
+          heightMap[i-5] * 0.03 + 
+          heightMap[i-4] * 0.04 + 
+          heightMap[i-3] * 0.06 + 
+          heightMap[i-2] * 0.08 + 
+          heightMap[i-1] * 0.12 + 
+          heightMap[i] * 0.26 + 
+          heightMap[i+1] * 0.12 + 
+          heightMap[i+2] * 0.08 + 
+          heightMap[i+3] * 0.06 + 
+          heightMap[i+4] * 0.04 + 
+          heightMap[i+5] * 0.03 + 
+          heightMap[i+6] * 0.02 + 
+          heightMap[i+7] * 0.01 + 
+          heightMap[i+8] * 0.01
+        );
+      }
+    }
+    
+    // Draw the snow pile only in the content area, not affecting the lights border
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.lineWidth = 1;
+    
+    ctx.beginPath();
+    ctx.moveTo(snowStartX, snowStartY); // Start from content area bottom-left
+    
+    for (let i = 0; i < heightMap.length; i++) {
+      const x = snowStartX + i; // Convert back to viewport coordinates
+      const y = snowStartY - heightMap[i]; // Draw from content bottom upward
+      ctx.lineTo(x, y);
+    }
+    
+    ctx.lineTo(snowEndX, snowStartY); // End at content area bottom-right
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    
+    // Add a gradient fill to make it look more natural
+    const gradient = ctx.createLinearGradient(snowStartX, snowStartY - MAX_PILE_HEIGHT, snowStartX, snowStartY);
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0.9)');
+    
+    ctx.fillStyle = gradient;
+    ctx.fill();
+    
+    // Add sparkles on the surface
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    for (let i = 0; i < heightMap.length; i += 8) {
+      if (heightMap[i] > 5 && Math.random() < 0.3) {
+        const x = snowStartX + i; // Convert back to viewport coordinates
+        const y = snowStartY - heightMap[i];
+        ctx.beginPath();
+        ctx.arc(x, y, 1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    
+    ctx.restore();
+  }
+
   function resize() {
     w = c.clientWidth;
     h = c.clientHeight;
@@ -2344,12 +2457,28 @@ body {
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 0.5;
     
+    // Draw the snow pile first (behind falling snow)
+    drawSnowPile(ctx);
+    
     for (let f of flakes) {
       f.a += f.spin;
       f.y += f.vy;
       f.x += Math.sin(f.a) * f.drift;
 
-      if (f.y - f.r > h) { f.x = rand(0, w); f.y = -10; }
+      // Check if snowflake hits the content area bottom or snow pile
+      const contentBottom = window.innerWidth <= 768 ? 24 : 36;
+      const contentBottomY = h - contentBottom;
+      const pileHeight = getPileHeightAt(f.x);
+      const groundLevel = contentBottomY - pileHeight;
+      
+      if (f.y - f.r > groundLevel) {
+        // Snowflake settles into the pile
+        addToSnowPile(f.x, f.r);
+        // Reset snowflake to top
+        f.x = rand(0, w);
+        f.y = -10;
+      }
+      
       if (f.x < -10) f.x = w + 10;
       if (f.x > w + 10) f.x = -10;
 
@@ -2358,6 +2487,24 @@ body {
     }
     ctx.globalAlpha = 1;
     anim = requestAnimationFrame(step);
+  }
+
+  function getPileHeightAt(x) {
+    if (snowPile.length === 0) return 0;
+    
+    // Find snow within a reasonable distance of this x position
+    const nearbySnow = snowPile.filter(snow => Math.abs(snow.x - x) < 20);
+    if (nearbySnow.length === 0) return 0;
+    
+    // Calculate average height
+    let totalHeight = 0;
+    nearbySnow.forEach(snow => {
+      const distance = Math.abs(snow.x - x);
+      const influence = Math.max(0, 1 - distance / 20);
+      totalHeight += snow.size * 8.0 * influence;
+    });
+    
+    return Math.min(totalHeight, MAX_PILE_HEIGHT);
   }
 
   // Use throttled resize observer for better performance
