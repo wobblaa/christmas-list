@@ -2468,7 +2468,7 @@ body {
       // Check if snowflake hits the content area bottom or snow pile
       const contentBottom = window.innerWidth <= 768 ? 24 : 36;
       const contentBottomY = h - contentBottom;
-      const pileHeight = getPileHeightAt(f.x);
+      const pileHeight = getPileHeightAt(f.x, contentBottom);
       const groundLevel = contentBottomY - pileHeight;
       
       if (f.y - f.r > groundLevel) {
@@ -2489,11 +2489,22 @@ body {
     anim = requestAnimationFrame(step);
   }
 
-  function getPileHeightAt(x) {
+  function getPileHeightAt(x, contentMargin) {
     if (snowPile.length === 0) return 0;
     
+    // Convert x to content area coordinates
+    const contentX = x - contentMargin;
+    const contentWidth = w - (contentMargin * 2);
+    const edgePadding = 20;
+    
+    // Only check within content area bounds
+    if (contentX < edgePadding || contentX >= contentWidth - edgePadding) return 0;
+    
     // Find snow within a reasonable distance of this x position
-    const nearbySnow = snowPile.filter(snow => Math.abs(snow.x - x) < 20);
+    const nearbySnow = snowPile.filter(snow => {
+      const snowContentX = snow.x - contentMargin;
+      return snowContentX >= edgePadding && snowContentX < contentWidth - edgePadding && Math.abs(snow.x - x) < 20;
+    });
     if (nearbySnow.length === 0) return 0;
     
     // Calculate average height
