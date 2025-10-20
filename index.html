@@ -2348,7 +2348,7 @@ body {
     if (snowPile.length === 0) return;
     
     // Get the content area boundaries (where content pane starts/ends)
-    const contentMargin = window.innerWidth <= 768 ? 24 : 36; // Match content-pane margins
+    const contentMargin = 36; // Use consistent margin for both platforms
     const snowStartY = h - contentMargin; // Start snow pile from content area bottom
     const snowStartX = contentMargin; // Start snow pile from content area left
     const snowEndX = w - contentMargin; // End snow pile at content area right
@@ -2466,7 +2466,8 @@ body {
       f.x += Math.sin(f.a) * f.drift;
 
       // Check if snowflake hits the content area bottom or snow pile
-      const contentBottom = window.innerWidth <= 768 ? 24 : 36;
+      // Use a more conservative approach - always use 36px margin for now
+      const contentBottom = 36; // Use desktop margin for both platforms temporarily
       const contentBottomY = h - contentBottom;
       const pileHeight = getPileHeightAt(f.x, contentBottom);
       const groundLevel = contentBottomY - pileHeight;
