@@ -667,10 +667,10 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
               <li class="draggable-gift" draggable="true" data-id="${g.id}">
                 <div class="drag-handle" title="Drag to reorder">⋮⋮</div>
                 <div class="gift-content">
-                  <div>
+                <div>
                     <strong>${g.name}</strong>
-                    ${linkHtml}
-                  </div>
+                  ${linkHtml}
+                </div>
                   ${hasDescription ? `
                     <div class="description-link" onclick="toggleGiftDescription('${descriptionId}')">
                       <span class="desc-toggle-text">${LANGUAGES[currentLanguage].showDescription}</span>
@@ -1058,7 +1058,7 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
         document.querySelectorAll('.toggle-purchased-btn').forEach(btn => {
           btn.addEventListener('click', async (e) => {
             const giftId = e.currentTarget.dataset.giftId;
-            await toggleGiftPurchasedStatus(giftId);
+              await toggleGiftPurchasedStatus(giftId);
           });
         });
       };
@@ -1627,9 +1627,9 @@ body {
     /* Main gradient */
     linear-gradient(135deg, #0a3a2a 0%, #12613f 25%, #1b7a53 50%, #0f4c3a 75%, #0a3a2a 100%);
   background-size: 200px 200px, 300px 300px, 250px 250px, 180px 180px, 220px 220px, 280px 280px, 150px 150px, 120px 120px, 100px 100px, 100% 100%;
-  color: #eaf4ea;
-  padding-top: 1px;
-}
+      color: #eaf4ea;
+      padding-top: 1px;
+    }
 
     h1, h2, h3 { 
       color: #e0ecff; 
@@ -2523,15 +2523,90 @@ body {
   const throttledResize = throttle(resize, 100);
   const ro = new ResizeObserver(throttledResize);
   ro.observe(document.documentElement);
-  resize();
-  step();
-
-  // Pause when tab hidden to save battery
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) { if (anim) cancelAnimationFrame(anim); }
-    else { step(); }
-  });
 })();
+
+// ===== BACKGROUND CHRISTMAS MUSIC =====
+document.addEventListener('DOMContentLoaded', function() {
+  const christmasMusic = document.getElementById('christmasMusic');
+  const musicToggle = document.getElementById('musicToggle');
+  
+  // Set volume first
+  christmasMusic.volume = 0.3; // 30% volume for background music
+  
+  let isPlaying = false;
+  
+  // Music toggle button functionality
+  musicToggle.addEventListener('click', function(e) {
+    e.preventDefault();
+    console.log('Music button clicked, current state:', isPlaying);
+    
+    if (isPlaying) {
+      christmasMusic.pause();
+      musicToggle.textContent = '🎵';
+      isPlaying = false;
+      console.log('Music paused');
+    } else {
+      console.log('Attempting to play music...');
+      christmasMusic.play().then(() => {
+        musicToggle.textContent = '⏸️';
+        isPlaying = true;
+        console.log('Music started playing successfully!');
+      }).catch(error => {
+        console.log('Audio play failed:', error);
+        musicToggle.textContent = '🔇';
+        alert('Could not play music. Please check if the audio file exists and try again.');
+      });
+    }
+  });
+  
+  // Check if audio file loads properly
+  christmasMusic.addEventListener('loadstart', () => {
+    console.log('Music file loading started...');
+  });
+  
+  christmasMusic.addEventListener('canplay', () => {
+    console.log('Music file can play');
+  });
+  
+  christmasMusic.addEventListener('error', (e) => {
+    console.log('Music file error:', e);
+    console.log('Error details:', christmasMusic.error);
+    musicToggle.textContent = '❌';
+    alert('Could not load music file. Please check if ChristmasRock.mp3 exists in the same folder as index.html');
+  });
+  
+  // Try multiple approaches to autoplay
+  function tryAutoplay() {
+    christmasMusic.play().then(() => {
+      musicToggle.textContent = '⏸️';
+      isPlaying = true;
+      console.log('Music autoplay successful');
+    }).catch(error => {
+      console.log('Autoplay attempt failed:', error);
+      musicToggle.textContent = '🎵';
+    });
+  }
+  
+  // Try autoplay immediately
+  tryAutoplay();
+  
+  // Try again after a short delay
+  setTimeout(tryAutoplay, 100);
+  
+  // Try when the page is fully loaded
+  window.addEventListener('load', tryAutoplay);
+  
+  // Try when user first interacts with any element
+  document.addEventListener('click', tryAutoplay, { once: true });
+  document.addEventListener('keydown', tryAutoplay, { once: true });
+  document.addEventListener('touchstart', tryAutoplay, { once: true });
+  
+  // Update button when music ends
+  christmasMusic.addEventListener('ended', function() {
+    musicToggle.textContent = '🎵';
+    isPlaying = false;
+  });
+});
 </script>
 
 </head>
@@ -2540,10 +2615,11 @@ body {
   <h1 id="christmasHeader" style="text-align: center; margin-bottom: 20px;">Welcome to the Family Gift List!</h1>
   <div id="authStatus">
     <span id="authStatusText">Checking authentication status...</span>
-    <div style="display: flex; gap: 8px; align-items: center;">
-      <button id="languageToggle" style="background: linear-gradient(45deg, #ff6b6b, #4ecdc4); color: white; border: none; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 0.9em;">FR</button>
-      <button id="signOutButton" style="display:none;">Sign Out</button>
-    </div>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <button id="musicToggle" style="background: linear-gradient(45deg, #ff6b6b, #4ecdc4); color: white; border: none; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 0.9em;">🎵</button>
+                <button id="languageToggle" style="background: linear-gradient(45deg, #ff6b6b, #4ecdc4); color: white; border: none; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 0.9em;">FR</button>
+    <button id="signOutButton" style="display:none;">Sign Out</button>
+              </div>
   </div>
 
   <div id="authForm">
@@ -2576,6 +2652,12 @@ body {
   <div id="viewOtherUserGiftsContainer"></div>
   <div id="myPurchasesContainer"></div>
   </div></div>
+  
+  <!-- Background Christmas Music -->
+  <audio id="christmasMusic" loop autoplay>
+    <source src="ChristmasRock.mp3" type="audio/mp3">
+    Your browser does not support the audio element.
+  </audio>
 </body>
 </html>
 
