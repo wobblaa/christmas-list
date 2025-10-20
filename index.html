@@ -544,8 +544,8 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
                     </div>
                   ` : '<div style="height: 20px;"></div>'}
                 </div>
-                <div style="margin-top:6px; display:flex; gap:2px; flex-wrap:wrap; align-items:center;">
-                  <button class="edit-gift-btn" data-id="${g.id}" data-name="${escapeAttr(g.name)}" data-desc="${escapeAttr(g.description || '')}" data-url="${escapeAttr(g.url || '')}">Edit</button>
+                <div style="margin-top:6px; display:flex; gap:3px; flex-wrap:wrap; align-items:center;">
+                  <button class="edit-gift-btn" data-id="${g.id}" data-name="${escapeAttr(g.name)}" data-desc="${escapeAttr(g.description || '')}" data-url="${escapeAttr(g.url || '')}" style="margin-right: -2px;">Edit</button>
                   <button class="delete-gift-btn" data-id="${g.id}">Remove</button>
                 </div>
               </li>
