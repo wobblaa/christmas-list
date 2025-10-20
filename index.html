@@ -1599,7 +1599,7 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
 :root {
   --card-bg: rgba(255,255,255,0.08);
   --card-border: rgba(255,255,255,0.18);
-      --lights-height: 24px;
+      --lights-height: 36px; /* 1.5x bigger: 24px * 1.5 = 36px */
       --pane-gap: 12px;
 }
 
@@ -1650,10 +1650,10 @@ body {
     /* ===== LAYOUT ===== */
     .content-pane {
       position: fixed;
-      top: 24px; /* Start after top lights */
-      left: 24px; /* Start after left lights */
-      right: 24px; /* End before right lights */
-      bottom: 24px; /* End before bottom lights */
+      top: 36px; /* Start after top lights */
+      left: 36px; /* Start after left lights */
+      right: 36px; /* End before right lights */
+      bottom: 36px; /* End before bottom lights */
       overflow: auto;
       padding: 16px 0;
       z-index: 3;
@@ -1674,10 +1674,10 @@ body {
     /* ===== MOBILE RESPONSIVENESS ===== */
     @media (max-width: 768px) {
       .content-pane {
-        left: 12px;
-        right: 12px;
-        top: 12px;
-        bottom: 12px;
+        left: 18px; /* 1.5x bigger: 12px * 1.5 = 18px */
+        right: 18px;
+        top: 18px;
+        bottom: 18px;
         padding: 8px 0;
       }
       
@@ -2073,16 +2073,16 @@ body {
       top: 0;
       left: 0;
       right: 0;
-      height: 24px;
+      height: 36px; /* 1.5x bigger */
       pointer-events: none;
       z-index: -1;
       background:
-        radial-gradient(circle at 10% 50%, #ff4d4d 0 4px, transparent 5px) 0 0/80px 24px,
-        radial-gradient(circle at 30% 50%, #ffd166 0 4px, transparent 5px) 0 0/80px 24px,
-        radial-gradient(circle at 50% 50%, #6ee7b7 0 4px, transparent 5px) 0 0/80px 24px,
-        radial-gradient(circle at 70% 50%, #60a5fa 0 4px, transparent 5px) 0 0/80px 24px,
-        radial-gradient(circle at 90% 50%, #f472b6 0 4px, transparent 5px) 0 0/80px 24px,
-        linear-gradient(#2b364a, #2b364a) 0 12px/100% 2px repeat-x;
+        radial-gradient(circle at 10% 50%, #ff4d4d 0 6px, transparent 7px) 0 0/120px 36px,
+        radial-gradient(circle at 30% 50%, #ffd166 0 6px, transparent 7px) 0 0/120px 36px,
+        radial-gradient(circle at 50% 50%, #6ee7b7 0 6px, transparent 7px) 0 0/120px 36px,
+        radial-gradient(circle at 70% 50%, #60a5fa 0 6px, transparent 7px) 0 0/120px 36px,
+        radial-gradient(circle at 90% 50%, #f472b6 0 6px, transparent 7px) 0 0/120px 36px,
+        linear-gradient(#2b364a, #2b364a) 0 18px/100% 2px repeat-x;
       animation: twinkle 0.8s ease-in-out infinite;
     }
 
@@ -2106,16 +2106,16 @@ body {
       top: 0;
       right: 0;
       bottom: 0;
-      width: 24px;
+      width: 36px; /* 1.5x bigger */
       pointer-events: none;
       z-index: 0;
       background:
-        radial-gradient(circle at 50% 10%, #ff4d4d 0 4px, transparent 5px) 0 0/24px 80px,
-        radial-gradient(circle at 50% 30%, #ffd166 0 4px, transparent 5px) 0 0/24px 80px,
-        radial-gradient(circle at 50% 50%, #6ee7b7 0 4px, transparent 5px) 0 0/24px 80px,
-        radial-gradient(circle at 50% 70%, #60a5fa 0 4px, transparent 5px) 0 0/24px 80px,
-        radial-gradient(circle at 50% 90%, #f472b6 0 4px, transparent 5px) 0 0/24px 80px,
-        linear-gradient(#2b364a, #2b364a) 12px 0/2px 100% repeat-y;
+        radial-gradient(circle at 50% 10%, #ff4d4d 0 6px, transparent 7px) 0 0/36px 120px,
+        radial-gradient(circle at 50% 30%, #ffd166 0 6px, transparent 7px) 0 0/36px 120px,
+        radial-gradient(circle at 50% 50%, #6ee7b7 0 6px, transparent 7px) 0 0/36px 120px,
+        radial-gradient(circle at 50% 70%, #60a5fa 0 6px, transparent 7px) 0 0/36px 120px,
+        radial-gradient(circle at 50% 90%, #f472b6 0 6px, transparent 7px) 0 0/36px 120px,
+        linear-gradient(#2b364a, #2b364a) 18px 0/2px 100% repeat-y;
       animation: twinkle 0.8s ease-in-out infinite;
     }
 
@@ -2139,16 +2139,16 @@ body {
       bottom: 0;
       left: 0;
       right: 0;
-      height: 24px;
+      height: 36px; /* 1.5x bigger */
       pointer-events: none;
       z-index: 0;
       background:
-        radial-gradient(circle at 10% 50%, #ff4d4d 0 4px, transparent 5px) 0 0/80px 24px,
-        radial-gradient(circle at 30% 50%, #ffd166 0 4px, transparent 5px) 0 0/80px 24px,
-        radial-gradient(circle at 50% 50%, #6ee7b7 0 4px, transparent 5px) 0 0/80px 24px,
-        radial-gradient(circle at 70% 50%, #60a5fa 0 4px, transparent 5px) 0 0/80px 24px,
-        radial-gradient(circle at 90% 50%, #f472b6 0 4px, transparent 5px) 0 0/80px 24px,
-        linear-gradient(#2b364a, #2b364a) 0 12px/100% 2px repeat-x;
+        radial-gradient(circle at 10% 50%, #ff4d4d 0 6px, transparent 7px) 0 0/120px 36px,
+        radial-gradient(circle at 30% 50%, #ffd166 0 6px, transparent 7px) 0 0/120px 36px,
+        radial-gradient(circle at 50% 50%, #6ee7b7 0 6px, transparent 7px) 0 0/120px 36px,
+        radial-gradient(circle at 70% 50%, #60a5fa 0 6px, transparent 7px) 0 0/120px 36px,
+        radial-gradient(circle at 90% 50%, #f472b6 0 6px, transparent 7px) 0 0/120px 36px,
+        linear-gradient(#2b364a, #2b364a) 0 18px/100% 2px repeat-x;
       animation: twinkle 0.8s ease-in-out infinite;
     }
 
@@ -2172,16 +2172,16 @@ body {
       top: 0;
       left: 0;
       bottom: 0;
-      width: 24px;
+      width: 36px; /* 1.5x bigger */
       pointer-events: none;
       z-index: 0;
       background:
-        radial-gradient(circle at 50% 10%, #ff4d4d 0 4px, transparent 5px) 0 0/24px 80px,
-        radial-gradient(circle at 50% 30%, #ffd166 0 4px, transparent 5px) 0 0/24px 80px,
-        radial-gradient(circle at 50% 50%, #6ee7b7 0 4px, transparent 5px) 0 0/24px 80px,
-        radial-gradient(circle at 50% 70%, #60a5fa 0 4px, transparent 5px) 0 0/24px 80px,
-        radial-gradient(circle at 50% 90%, #f472b6 0 4px, transparent 5px) 0 0/24px 80px,
-        linear-gradient(#2b364a, #2b364a) 12px 0/2px 100% repeat-y;
+        radial-gradient(circle at 50% 10%, #ff4d4d 0 6px, transparent 7px) 0 0/36px 120px,
+        radial-gradient(circle at 50% 30%, #ffd166 0 6px, transparent 7px) 0 0/36px 120px,
+        radial-gradient(circle at 50% 50%, #6ee7b7 0 6px, transparent 7px) 0 0/36px 120px,
+        radial-gradient(circle at 50% 70%, #60a5fa 0 6px, transparent 7px) 0 0/36px 120px,
+        radial-gradient(circle at 50% 90%, #f472b6 0 6px, transparent 7px) 0 0/36px 120px,
+        linear-gradient(#2b364a, #2b364a) 18px 0/2px 100% repeat-y;
       animation: twinkle 0.8s ease-in-out infinite;
     }
 
