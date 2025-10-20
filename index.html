@@ -787,50 +787,29 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
 
         let html = `
           <h3>View Other Family Members' Lists:</h3>
-          <div class="christmas-tree-container">
-            <div class="christmas-tree">
-                <img src="tree2.png" alt="Christmas Tree" class="tree-image">
-            </div>
-            <div class="ornaments-container">`;
+          <div class="family-members-list">`;
         
-        // Create ornaments for each family member with natural scattering
+        // Create ornament buttons for each family member
         const ornamentColors = ['#ff4d4d', '#ffd166', '#6ee7b7', '#60a5fa', '#f472b6', '#ff9f40', '#9b59b6', '#e74c3c'];
-        
-        // Define positions for ornaments on the tree (percentage-based for true responsiveness)
-        const naturalPositions = [
-          { top: '54%', left: '64%' },   // Position 0
-          { top: '57%', left: '43%' },   // Position 1
-          { top: '31%', left: '46%' },   // Position 2
-          { top: '41%', left: '33%' },   // Position 3
-          { top: '67%', left: '25%' },   // Position 4
-          { top: '72%', left: '69%' },   // Position 5
-          { top: '40%', left: '75%' },   // Position 6
-        ];
-
-        // Ornaments are now static with exact positions
         
         usersWithLabels.forEach((u, index) => {
           const color = ornamentColors[index % ornamentColors.length];
-          const position = naturalPositions[index] || naturalPositions[index % naturalPositions.length];
           
           html += `
-            <div class="ornament" 
-                 data-uid="${u.uid}" 
-                 data-name="${u._label}"
-                 style="--ornament-color: ${color}; --top: ${position.top}; --left: ${position.left};">
+            <button class="ornament-button" 
+                    data-uid="${u.uid}" 
+                    data-name="${u._label}"
+                    style="--ornament-color: ${color};">
               <span class="ornament-text">${u._label}</span>
-            </div>`;
+            </button>`;
         });
 
-        
-        html += `
-            </div>
-          </div>`;
+        html += `</div>`;
         
         otherUsersListElement.innerHTML = html;
 
-        document.querySelectorAll('.ornament').forEach(ornament => {
-          ornament.addEventListener('click', (e) => {
+        document.querySelectorAll('.ornament-button').forEach(button => {
+          button.addEventListener('click', (e) => {
             const targetUid = e.currentTarget.dataset.uid;
             const targetName = e.currentTarget.dataset.name;
             displayOtherUserGifts(targetUid, targetName);
@@ -1536,61 +1515,36 @@ body {
       min-width: 0;
     }
 
-    /* ===== CHRISTMAS TREE ===== */
-    .christmas-tree-container {
-      position: relative;
+    /* ===== FAMILY MEMBERS LIST ===== */
+    .family-members-list {
       display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 500px;
+      flex-direction: row;
+      gap: 12px;
       margin: 20px 0;
-      padding: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
-    .christmas-tree {
-      position: relative;
-      width: 400px;
-      height: 500px;
-    }
-
-    .tree-image {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
-    }
-
-    .ornaments-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      pointer-events: none;
-    }
-
-    .ornament {
-      position: absolute;
-      width: 50px;
-      height: 60px;
+    .ornament-button {
+      width: 80px;
+      height: 100px;
       border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; /* Bulb shape */
       background: var(--ornament-color);
       border: 2px solid rgba(255, 255, 255, 0.4);
       cursor: pointer;
-      pointer-events: all;
       display: flex;
       align-items: center;
       justify-content: center;
       box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
       transition: all 0.3s ease;
       animation: gentle-swing 4s ease-in-out infinite;
-      top: var(--top, 0);
-      left: var(--left, 0);
-      z-index: 10;
+      position: relative;
+      padding: 0;
+      margin: 0 auto;
     }
 
-    .ornament:hover {
-      transform: scale(1.15);
+    .ornament-button:hover {
+      transform: scale(1.05);
       box-shadow: 0 5px 10px rgba(0, 0, 0, 0.4), 0 0 15px var(--ornament-color);
       animation-play-state: paused;
     }
@@ -1598,7 +1552,7 @@ body {
     .ornament-text {
       color: white;
       font-weight: bold;
-      font-size: 9px;
+      font-size: 14px;
       text-align: center;
       text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
       line-height: 1.1;
@@ -1606,7 +1560,7 @@ body {
     }
 
     /* Add a small cap/top to the ornament */
-    .ornament::before {
+    .ornament-button::before {
       content: '';
       position: absolute;
       top: -4px;
@@ -1619,10 +1573,9 @@ body {
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
 
-
     /* Add some variation to prevent perfect alignment */
-    .ornament:nth-child(odd) { transform: rotate(-1deg); }
-    .ornament:nth-child(even) { transform: rotate(1deg); }
+    .ornament-button:nth-child(odd) { transform: rotate(-1deg); }
+    .ornament-button:nth-child(even) { transform: rotate(1deg); }
 
     @keyframes gentle-swing {
       0%, 100% { transform: rotate(-1deg); }
