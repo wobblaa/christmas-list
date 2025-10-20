@@ -796,15 +796,15 @@ authStatusTextElement.textContent = `Signed in as: ${name}`;
         // Create ornaments for each family member with natural scattering
         const ornamentColors = ['#ff4d4d', '#ffd166', '#6ee7b7', '#60a5fa', '#f472b6', '#ff9f40', '#9b59b6', '#e74c3c'];
         
-        // Define positions for ornaments on the tree (works for any number of users)
+        // Define positions for ornaments on the tree (percentage-based for true responsiveness)
         const naturalPositions = [
-          { top: '270.48px', left: '256.19px' },   // Position 0
-          { top: '286.48px', left: '171.19px' },   // Position 1
-          { top: '154.48px', left: '182.19px' },   // Position 2
-          { top: '206.48px', left: '132.19px' },   // Position 3
-          { top: '334.48px', left: '99.19px' },    // Position 4
-          { top: '359.48px', left: '276.19px' },   // Position 5
-          { top: '200.48px', left: '300.19px' },   // Position 6
+          { top: '54%', left: '64%' },   // Position 0
+          { top: '57%', left: '43%' },   // Position 1
+          { top: '31%', left: '46%' },   // Position 2
+          { top: '41%', left: '33%' },   // Position 3
+          { top: '67%', left: '25%' },   // Position 4
+          { top: '72%', left: '69%' },   // Position 5
+          { top: '40%', left: '75%' },   // Position 6
         ];
 
         // Ornaments are now static with exact positions
