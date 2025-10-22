@@ -2234,9 +2234,15 @@ body {
 </script>
 
 <script>
+console.log('Snow script starting...');
 (() => {
+  console.log('Snow IIFE executing...');
   const c = document.getElementById('snow');
-  if (!c) return;
+  if (!c) {
+    console.log('Snow canvas not found!');
+    return;
+  }
+  console.log('Snow canvas found, initializing...');
   const ctx = c.getContext('2d', { alpha: true });
 
   Object.assign(c.style, {
@@ -2250,8 +2256,20 @@ body {
 
   let w, h, flakes = [], targetCount = 0, anim;
   let snowPile = []; // Array to store settled snow positions
+  let billVacuum = null; // Bill vacuum cleaner state
+  let billImage = null; // Preloaded Bill image
   const DPR = window.devicePixelRatio || 1;
-  const MAX_PILE_HEIGHT = 200; // Maximum snow pile height in pixels
+  const MAX_PILE_HEIGHT = 150; // Maximum snow pile height in pixels (reduced for easier Bill trigger)
+  
+  // ===== FEATURE TOGGLE CONFIGURATION =====
+  // Set these to false to temporarily disable features (easy to re-enable later)
+  // To re-enable: simply change false to true and save the file
+  const ENABLE_SNOW_PILING = false; // Set to true to enable snow piling up at bottom
+  const ENABLE_BILL_VACUUM = false; // Set to true to enable Bill vacuum cleaner
+  
+  // Preload Bill image
+  billImage = new Image();
+  billImage.src = 'bill.png';
 
   function rand(min, max) { return Math.random() * (max - min) + min; }
 
@@ -2332,6 +2350,11 @@ body {
   }
 
   function addToSnowPile(x, size) {
+    // Check if snow piling is enabled
+    if (!ENABLE_SNOW_PILING) {
+      return; // Skip adding to snow pile if disabled
+    }
+    
     // Add settled snow to the pile
     snowPile.push({
       x: x,
@@ -2339,13 +2362,138 @@ body {
       settledTime: Date.now()
     });
     
-    // Keep only recent snow (last 30 seconds worth)
-    const now = Date.now();
-    snowPile = snowPile.filter(snow => now - snow.settledTime < 30000);
+    // Keep all snow permanently (no time limit)
+    // const now = Date.now();
+    // snowPile = snowPile.filter(snow => now - snow.settledTime < 30000);
+    
+    // Check if snow pile has reached max height
+    if (snowPile.length === 0) return;
+    
+    // Calculate actual visual height using the same method as drawSnowPile
+    const contentMargin = 36;
+    const contentWidth = w - (contentMargin * 2);
+    const heightMap = new Array(Math.floor(contentWidth)).fill(0);
+    const edgePadding = 20;
+    
+    snowPile.forEach(snow => {
+      const x = Math.floor(snow.x);
+      const contentX = x - contentMargin;
+      if (contentX >= edgePadding && contentX < contentWidth - edgePadding) {
+        heightMap[contentX] = Math.min(heightMap[contentX] + snow.size * 8.0, MAX_PILE_HEIGHT);
+      }
+    });
+    
+    // Smooth the height map (same as drawSnowPile)
+    for (let pass = 0; pass < 20; pass++) {
+      for (let i = 8; i < heightMap.length - 8; i++) {
+        heightMap[i] = (
+          heightMap[i-8] * 0.01 + 
+          heightMap[i-7] * 0.01 + 
+          heightMap[i-6] * 0.02 + 
+          heightMap[i-5] * 0.03 + 
+          heightMap[i-4] * 0.04 + 
+          heightMap[i-3] * 0.06 + 
+          heightMap[i-2] * 0.08 + 
+          heightMap[i-1] * 0.12 + 
+          heightMap[i] * 0.26 + 
+          heightMap[i+1] * 0.12 + 
+          heightMap[i+2] * 0.08 + 
+          heightMap[i+3] * 0.06 + 
+          heightMap[i+4] * 0.04 + 
+          heightMap[i+5] * 0.03 + 
+          heightMap[i+6] * 0.02 + 
+          heightMap[i+7] * 0.01 + 
+          heightMap[i+8] * 0.01
+        );
+      }
+    }
+    
+    const actualMaxHeight = Math.max(...heightMap);
+    console.log(`Snow pile height: ${actualMaxHeight.toFixed(1)}px / ${MAX_PILE_HEIGHT}px (${(actualMaxHeight/MAX_PILE_HEIGHT*100).toFixed(1)}%) - ${snowPile.length} snowflakes`);
+    
+    const triggerHeight = 45; // Bill appears at 45px
+    console.log('Checking Bill trigger - Height:', actualMaxHeight, 'Trigger at:', triggerHeight, 'Bill state:', billVacuum, 'Condition:', actualMaxHeight >= triggerHeight && !billVacuum);
+    
+    if (actualMaxHeight >= triggerHeight && !billVacuum) {
+      console.log('🎉 SNOW REACHED 45px! Triggering Bill vacuum cleaner!');
+      console.log('Bill vacuum state before:', billVacuum);
+      startBillVacuum();
+      console.log('Bill vacuum state after:', billVacuum);
+    } else if (actualMaxHeight >= triggerHeight) {
+      console.log('Snow at 45px but Bill already active:', billVacuum);
+    }
+  }
+
+  function startBillVacuum() {
+    // Check if Bill vacuum is enabled
+    if (!ENABLE_BILL_VACUUM) {
+      return; // Skip starting Bill if disabled
+    }
+    
+    console.log('Bill is coming to clean up the snow!');
+    const contentMargin = 36;
+    const snowStartY = h - contentMargin; // Bottom of content area
+    const currentPileHeight = Math.max(...snowPile.map(snow => snow.size * 8.0)) || 0;
+    
+    billVacuum = {
+      x: -100, // Start off-screen to the left
+      y: h - 125, // Position 125px from bottom
+      speed: 3, // Pixels per frame
+      width: 80,
+      height: 60,
+      startTime: Date.now()
+    };
+  }
+
+  function updateBillVacuum() {
+    if (!billVacuum || !ENABLE_BILL_VACUUM) return;
+    
+    // Move Bill from left to right
+    billVacuum.x += billVacuum.speed;
+    
+    // Clear snow pile as Bill passes over it
+    const billLeft = billVacuum.x - 5; // Add padding to account for image margins
+    const billRight = billVacuum.x + billVacuum.width + 5; // Add padding to account for image margins
+    
+    snowPile = snowPile.filter(snow => {
+      const contentMargin = 36;
+      const contentX = snow.x - contentMargin;
+      return contentX < billLeft || contentX > billRight;
+    });
+    
+    // Remove Bill when he goes off-screen
+    if (billVacuum.x > w + 100) {
+      billVacuum = null;
+      console.log('Bill has finished cleaning!');
+    }
+  }
+
+  function drawBillVacuum(ctx) {
+    if (!billVacuum || !ENABLE_BILL_VACUUM) {
+      console.log('No bill vacuum to draw or Bill disabled');
+      return;
+    }
+    if (!billImage.complete) {
+      console.log('Bill image not loaded yet');
+      return;
+    }
+    
+    console.log('Drawing Bill at position:', billVacuum.x, billVacuum.y);
+    ctx.save();
+    
+    // Flip Bill vertically and position him
+    ctx.translate(billVacuum.x + billVacuum.width/2, billVacuum.y + billVacuum.height/2);
+    ctx.scale(1, -1); // Flip vertically
+    ctx.translate(-billVacuum.width/2, -billVacuum.height/2);
+    
+    // Draw Bill vacuum cleaner image
+    ctx.drawImage(billImage, 0, 0, billVacuum.width, billVacuum.height);
+    
+    ctx.restore();
   }
 
   function drawSnowPile(ctx) {
-    if (snowPile.length === 0) return;
+    if (snowPile.length === 0 || !ENABLE_SNOW_PILING) return;
     
     // Get the content area boundaries (where content pane starts/ends)
     const contentMargin = 36; // Use consistent margin for both platforms
@@ -2453,12 +2601,25 @@ body {
   }
 
   function step() {
+    try {
     ctx.clearRect(0, 0, w, h);
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 0.5;
-    
-    // Draw the snow pile first (behind falling snow)
-    drawSnowPile(ctx);
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 0.5;
+      
+      // Update Bill vacuum cleaner (only if enabled)
+      if (ENABLE_BILL_VACUUM) {
+        updateBillVacuum();
+      }
+      
+      // Draw the snow pile first (behind falling snow) (only if enabled)
+      if (ENABLE_SNOW_PILING) {
+        drawSnowPile(ctx);
+      }
+      
+      // Draw Bill vacuum cleaner (only if enabled)
+      if (ENABLE_BILL_VACUUM) {
+        drawBillVacuum(ctx);
+      }
     
     for (let f of flakes) {
       f.a += f.spin;
@@ -2473,8 +2634,10 @@ body {
       const groundLevel = contentBottomY - pileHeight;
       
       if (f.y - f.r > groundLevel) {
-        // Snowflake settles into the pile
-        addToSnowPile(f.x, f.r);
+        // Snowflake settles into the pile (only if snow piling is enabled)
+        if (ENABLE_SNOW_PILING) {
+          addToSnowPile(f.x, f.r);
+        }
         // Reset snowflake to top
         f.x = rand(0, w);
         f.y = -10;
@@ -2488,10 +2651,13 @@ body {
     }
     ctx.globalAlpha = 1;
     anim = requestAnimationFrame(step);
+    } catch (error) {
+      console.log('Snow animation error:', error);
+    }
   }
 
   function getPileHeightAt(x, contentMargin) {
-    if (snowPile.length === 0) return 0;
+    if (snowPile.length === 0 || !ENABLE_SNOW_PILING) return 0;
     
     // Convert x to content area coordinates
     const contentX = x - contentMargin;
@@ -2523,6 +2689,12 @@ body {
   const throttledResize = throttle(resize, 100);
   const ro = new ResizeObserver(throttledResize);
   ro.observe(document.documentElement);
+  
+  // Start the snow animation
+  console.log('Starting snow animation...');
+  resize();
+  step();
+  console.log('Snow animation started!');
 })();
 
 // ===== BACKGROUND CHRISTMAS MUSIC =====
@@ -2577,6 +2749,8 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Try multiple approaches to autoplay
   function tryAutoplay() {
+    // First try to unmute and play
+    christmasMusic.muted = false;
     christmasMusic.play().then(() => {
       musicToggle.textContent = '⏸️';
       isPlaying = true;
@@ -2590,16 +2764,28 @@ document.addEventListener('DOMContentLoaded', function() {
   // Try autoplay immediately
   tryAutoplay();
   
-  // Try again after a short delay
+  // Try again after short delays
   setTimeout(tryAutoplay, 100);
+  setTimeout(tryAutoplay, 500);
+  setTimeout(tryAutoplay, 1000);
   
   // Try when the page is fully loaded
   window.addEventListener('load', tryAutoplay);
+  
+  // Try when DOM is ready
+  document.addEventListener('DOMContentLoaded', tryAutoplay);
   
   // Try when user first interacts with any element
   document.addEventListener('click', tryAutoplay, { once: true });
   document.addEventListener('keydown', tryAutoplay, { once: true });
   document.addEventListener('touchstart', tryAutoplay, { once: true });
+  
+  // Try when page becomes visible
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      tryAutoplay();
+    }
+  });
   
   // Update button when music ends
   christmasMusic.addEventListener('ended', function() {
@@ -2654,7 +2840,7 @@ document.addEventListener('DOMContentLoaded', function() {
   </div></div>
   
   <!-- Background Christmas Music -->
-  <audio id="christmasMusic" loop autoplay>
+  <audio id="christmasMusic" loop autoplay muted>
     <source src="ChristmasRock.mp3" type="audio/mp3">
     Your browser does not support the audio element.
   </audio>
