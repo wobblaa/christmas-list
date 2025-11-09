@@ -14,6 +14,9 @@
       getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
       onAuthStateChanged, signOut, sendPasswordResetEmail
     } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+    import {
+      getStorage, ref as storageRef, uploadBytes, getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-storage.js";
 
      // --- Firebase config (yours) ---
     const firebaseConfig = {
@@ -27,6 +30,7 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const storage = getStorage(app);
     const auth = getAuth(app);
 
     // ===== LANGUAGE DATA =====
@@ -59,6 +63,12 @@
         'giftName': 'Gift Name',
         'description': 'Description',
         'url': 'URL (optional)',
+        'photoUrl': 'Photo URL (optional)',
+        'uploadPhoto': 'Upload Photo (optional)',
+        'noFileChosen': 'No file chosen',
+        'uploadingPhoto': 'Uploading photo...',
+        'photoTooLarge': 'Photo is too large (max {max}).',
+        'photoUploadFailed': 'Failed to upload photo. Please try again.',
         'addGift': 'Add Gift',
         
         // Gift List
@@ -69,6 +79,7 @@
         'unmarkPurchased': 'Unmark Purchased',
         'showDescription': 'Description',
         'hideDescription': 'Hide Description',
+        'viewPhoto': 'View Photo',
         
         // Other Users
         'viewOtherLists': 'View Other Family Members\' Lists:',
@@ -90,7 +101,8 @@
         'noGifts': 'No gifts found.',
         'loadingPurchases': 'Loading your purchases...',
         'noPurchases': 'No purchases found.',
-        'errorLoadingPurchases': 'Error loading your purchases. Please try again.'
+        'errorLoadingPurchases': 'Error loading your purchases. Please try again.',
+        'photoLoadError': 'Could not load photo. Please check the link.'
       },
       fr: {
         // Header
@@ -120,6 +132,12 @@
         'giftName': 'Nom du Cadeau',
         'description': 'Description',
         'url': 'URL (optionnel)',
+        'photoUrl': 'URL de photo (facultatif)',
+        'uploadPhoto': 'Télécharger une photo (facultatif)',
+        'noFileChosen': 'Aucun fichier sélectionné',
+        'uploadingPhoto': 'Téléchargement de la photo...',
+        'photoTooLarge': 'La photo est trop volumineuse (max {max}).',
+        'photoUploadFailed': 'Échec du téléchargement de la photo. Veuillez réessayer.',
         'addGift': 'Ajouter le Cadeau',
         
         // Gift List
@@ -130,6 +148,7 @@
         'unmarkPurchased': 'Démarquer Acheté',
         'showDescription': 'Description',
         'hideDescription': 'Masquer Description',
+        'viewPhoto': 'Voir la photo',
         
         // Other Users
         'viewOtherLists': 'Voir les Listes des Autres Membres de la Famille:',
@@ -151,7 +170,8 @@
         'noGifts': 'Aucun cadeau trouvé.',
         'loadingPurchases': 'Chargement de vos achats...',
         'noPurchases': 'Aucun achat trouvé.',
-        'errorLoadingPurchases': 'Erreur lors du chargement de vos achats. Veuillez réessayer.'
+        'errorLoadingPurchases': 'Erreur lors du chargement de vos achats. Veuillez réessayer.',
+        'photoLoadError': 'Impossible de charger la photo. Vérifiez le lien.'
       }
     };
 
@@ -320,8 +340,11 @@
     // DOM Elements (initialized after DOMContentLoaded) - cached for performance
     let authStatusElement, authStatusTextElement, authFormElement, firstNameInput, emailInput, passwordInput,
         signInButton, signUpButton, signOutButton, tabSignIn, tabSignUp,
-        addGiftForm, giftNameInput, giftDescriptionInput, giftUrlInput, giftListDisplayElement,
-        otherUsersListElement, viewOtherUserGiftsContainer, myPurchasesContainer, forgotPasswordLink;
+        addGiftForm, giftNameInput, giftDescriptionInput, giftUrlInput, giftImageInput, giftImageFileInput, giftImageFileNameDisplay, giftListDisplayElement,
+        otherUsersListElement, viewOtherUserGiftsContainer, myPurchasesContainer, forgotPasswordLink,
+        photoLightboxElement, photoLightboxImageElement, photoLightboxCaptionElement, photoLightboxCloseElement;
+
+    let lastPhotoTrigger = null;
 
     // Session state
     let currentUserUid = null;
@@ -332,6 +355,7 @@
 
     // In-memory cache for gift ordering (owner's list only)
     let ownerGiftsCache = []; // current owner's ordered list (orderIndex ASC)
+    const MAX_GIFT_PHOTO_SIZE = 5 * 1024 * 1024; // 5MB limit for uploaded photos
 
     document.addEventListener('DOMContentLoaded', () => {
       // Elements
@@ -348,11 +372,22 @@
       giftNameInput = document.getElementById('giftNameInput');
       giftDescriptionInput = document.getElementById('giftDescriptionInput');
       giftUrlInput = document.getElementById('giftUrlInput');
+      giftImageInput = document.getElementById('giftImageInput');
+      giftImageFileInput = document.getElementById('giftImageFileInput');
+      giftImageFileNameDisplay = document.getElementById('giftImageFileName');
       giftListDisplayElement = document.getElementById('giftListDisplay');
       otherUsersListElement = document.getElementById('otherUsersList');
       viewOtherUserGiftsContainer = document.getElementById('viewOtherUserGiftsContainer');
       myPurchasesContainer = document.getElementById('myPurchasesContainer');
       forgotPasswordLink = document.getElementById('forgotPasswordLink');
+      if (giftImageFileInput) {
+        giftImageFileInput.addEventListener('change', handleGiftPhotoSelection);
+      }
+
+      photoLightboxElement = document.getElementById('photoLightbox');
+      photoLightboxImageElement = document.getElementById('photoLightboxImage');
+      photoLightboxCaptionElement = document.getElementById('photoLightboxCaption');
+      photoLightboxCloseElement = document.getElementById('photoLightboxClose');
 
       // Auth tabs
       tabSignIn = document.getElementById('tabSignIn');
@@ -367,6 +402,45 @@
       signOutButton.addEventListener('click', handleSignOut);
       addGiftForm.addEventListener('submit', handleAddGift);
       forgotPasswordLink.addEventListener('click', handleForgotPassword);
+      document.body.addEventListener('click', (event) => {
+        const button = event.target.closest('.view-photo-btn');
+        if (!button) return;
+        event.preventDefault();
+        const imageUrl = button.dataset.imageUrl;
+        const imageName = button.dataset.imageName;
+        lastPhotoTrigger = button;
+        openGiftImage(imageUrl, imageName);
+      });
+
+      photoLightboxCloseElement?.addEventListener('click', closeGiftImage);
+
+      photoLightboxElement?.addEventListener('click', (event) => {
+        if (event.target === photoLightboxElement) {
+          closeGiftImage();
+        }
+      });
+
+      photoLightboxImageElement?.addEventListener('error', () => {
+        if (!photoLightboxCaptionElement) return;
+        if (photoLightboxImageElement) {
+          photoLightboxImageElement.style.display = 'none';
+        }
+        photoLightboxCaptionElement.textContent = LANGUAGES[currentLanguage]?.photoLoadError || 'Could not load photo.';
+      });
+
+      photoLightboxImageElement?.addEventListener('load', () => {
+        if (photoLightboxImageElement) {
+          photoLightboxImageElement.style.display = 'block';
+        }
+        if (!photoLightboxCaptionElement || !photoLightboxCaptionElement.dataset.originalCaption) return;
+        photoLightboxCaptionElement.textContent = photoLightboxCaptionElement.dataset.originalCaption;
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && photoLightboxElement?.classList.contains('active')) {
+          closeGiftImage();
+        }
+      });
       
       // Language toggle
       const languageToggle = document.getElementById('languageToggle');
@@ -554,6 +628,17 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
       if (!/^https?:\/\//i.test(url)) return "https://" + url; // add protocol if missing
       return url;
     }
+    function sanitizeFileName(name) {
+      return (name || 'photo')
+        .replace(/[^a-zA-Z0-9._-]+/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .slice(-60) || 'photo';
+    }
+    function truncateFileName(name) {
+      if (!name) return '';
+      return name.length > 30 ? name.slice(0, 12) + '…' + name.slice(-12) : name;
+    }
     function displayUrlText(u) {
       try {
         const { host, pathname } = new URL(u);
@@ -602,13 +687,50 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
     }
 
     // ===== GIFT MANAGEMENT FUNCTIONS =====
+    function handleGiftPhotoSelection() {
+      if (!giftImageFileInput || !giftImageFileNameDisplay) return;
+      if (!giftImageFileInput.files || giftImageFileInput.files.length === 0) {
+        giftImageFileNameDisplay.textContent = LANGUAGES[currentLanguage]?.noFileChosen || 'No file chosen';
+        return;
+      }
+      const file = giftImageFileInput.files[0];
+      giftImageFileNameDisplay.textContent = truncateFileName(file.name);
+    }
+
     async function handleAddGift(e) {
       e.preventDefault();
       if (!currentUserUid) return alert("Sign in first.");
       const name = giftNameInput.value.trim();
       const description = (giftDescriptionInput?.value || '').trim();
       const url = sanitizeUrl(giftUrlInput?.value || '');
+      let imageUrl = sanitizeUrl(giftImageInput?.value || '');
+      let imageStoragePath = null;
+      const imageFile = giftImageFileInput?.files?.[0] || null;
+
       if (!name) return alert('Please enter a gift name.');
+
+      if (imageFile) {
+        if (imageFile.size > MAX_GIFT_PHOTO_SIZE) {
+          alert((LANGUAGES[currentLanguage]?.photoTooLarge || 'Photo is too large (max 5 MB).').replace('{max}', '5 MB'));
+          return;
+        }
+        try {
+          if (giftImageFileNameDisplay) {
+            giftImageFileNameDisplay.textContent = LANGUAGES[currentLanguage]?.uploadingPhoto || 'Uploading photo...';
+          }
+          imageStoragePath = `giftPhotos/${currentUserUid}/${Date.now()}_${sanitizeFileName(imageFile.name)}`;
+          const photoRef = storageRef(storage, imageStoragePath);
+          await uploadBytes(photoRef, imageFile);
+          imageUrl = await getDownloadURL(photoRef);
+        } catch (uploadError) {
+          console.error('Photo upload failed:', uploadError);
+          alert(LANGUAGES[currentLanguage]?.photoUploadFailed || 'Failed to upload photo. Please try again.');
+          if (giftImageFileNameDisplay) {
+            giftImageFileNameDisplay.textContent = LANGUAGES[currentLanguage]?.noFileChosen || 'No file chosen';
+          }
+          return;
+        }
+      }
 
       try {
         const orderIndex = await getNextOrderIndexForOwner(currentUserUid);
@@ -616,6 +738,8 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
           name,
           description,
           url: url || null,
+          imageUrl: imageUrl || null,
+          imageStoragePath: imageStoragePath || null,
           listOwnerId: currentUserUid,
           isPurchased: false,
           purchasedByUid: null,
@@ -626,6 +750,9 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
         giftNameInput.value = '';
         if (giftDescriptionInput) giftDescriptionInput.value = '';
         if (giftUrlInput) giftUrlInput.value = '';
+        if (giftImageInput) giftImageInput.value = '';
+        if (giftImageFileInput) giftImageFileInput.value = '';
+        if (giftImageFileNameDisplay) giftImageFileNameDisplay.textContent = LANGUAGES[currentLanguage]?.noFileChosen || 'No file chosen';
       } catch (error) {
         showError(`Failed to add gift: ${error.message}`);
       }
@@ -660,6 +787,7 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
             <ul>`;
           for (const g of gifts) {
             const linkHtml = g.url ? ` <span>${renderGiftLink(g.url)}</span>` : '';
+            const photoButtonHtml = g.imageUrl ? `<button type="button" class="view-photo-btn" data-image-url="${escapeAttr(g.imageUrl)}" data-image-name="${escapeAttr(g.name)}">${LANGUAGES[currentLanguage].viewPhoto}</button>` : '';
             const hasDescription = g.description && g.description.trim();
             const descriptionId = `owner-desc-${g.id}`;
             
@@ -682,7 +810,8 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
                   ` : '<div style="height: 20px;"></div>'}
                 </div>
                 <div style="margin-top:6px; display:flex; gap:3px; flex-wrap:wrap; align-items:center;">
-                  <button class="edit-gift-btn" data-id="${g.id}" data-name="${escapeAttr(g.name)}" data-desc="${escapeAttr(g.description || '')}" data-url="${escapeAttr(g.url || '')}" style="margin-right: -2px;">${LANGUAGES[currentLanguage].edit}</button>
+                  ${photoButtonHtml}
+                  <button class="edit-gift-btn" data-id="${g.id}" data-name="${escapeAttr(g.name)}" data-desc="${escapeAttr(g.description || '')}" data-url="${escapeAttr(g.url || '')}" data-image="${escapeAttr(g.imageUrl || '')}" data-image-path="${escapeAttr(g.imageStoragePath || '')}" style="margin-right: -2px;">${LANGUAGES[currentLanguage].edit}</button>
                   <button class="delete-gift-btn" data-id="${g.id}">${LANGUAGES[currentLanguage].remove}</button>
                 </div>
               </li>
@@ -701,7 +830,9 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
               const curName = e.currentTarget.dataset.name || '';
               const curDesc = e.currentTarget.dataset.desc || '';
               const curUrl = e.currentTarget.dataset.url || '';
-              await editGift(id, curName, curDesc, curUrl);
+              const curImage = e.currentTarget.dataset.image || '';
+              const curImagePath = e.currentTarget.dataset.imagePath || '';
+              await editGift(id, curName, curDesc, curUrl, curImage, curImagePath);
             });
           });
 
@@ -1018,6 +1149,7 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
           <ul>`;
         for (const g of visible) {
           const linkHtml = g.url ? ` <span>${renderGiftLink(g.url)}</span>` : '';
+          const photoButtonHtml = g.imageUrl ? `<button type="button" class="view-photo-btn" data-image-url="${escapeAttr(g.imageUrl)}" data-image-name="${escapeAttr(g.name)}">${LANGUAGES[currentLanguage].viewPhoto}</button>` : '';
           let btn = '';
           if (!g.isPurchased) {
             btn = `<button class="toggle-purchased-btn mark" data-gift-id="${g.id}" data-target-uid="${targetUid}" data-target-label="${targetLabel}" data-is-purchased="false">${LANGUAGES[currentLanguage].markPurchased}</button>`;
@@ -1033,6 +1165,7 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
                 <div>
                   <strong>${g.name}</strong>
                   ${linkHtml}
+                  ${photoButtonHtml}
                 </div>
                 ${hasDescription ? `
                   <div class="description-link" onclick="toggleGiftDescription('${descriptionId}')">
@@ -1102,15 +1235,21 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
     }
 
     // ===== GIFT EDIT/DELETE FUNCTIONS =====
-    async function editGift(giftId, currentName, currentDesc, currentUrl) {
+    async function editGift(giftId, currentName, currentDesc, currentUrl, currentImage, currentImagePath) {
       const newName = prompt('Edit gift name:', currentName) ?? currentName;
       if (!newName.trim()) return alert('Gift name cannot be empty.');
       const newDesc = prompt('Edit description (optional):', currentDesc ?? '') ?? currentDesc ?? '';
       const newUrlRaw = prompt('Edit URL (optional):', currentUrl ?? '') ?? currentUrl ?? '';
       const newUrl = sanitizeUrl(newUrlRaw);
+      const newImageRaw = prompt('Edit photo URL (optional):', currentImage ?? '') ?? currentImage ?? '';
+      const newImage = sanitizeUrl(newImageRaw);
       try {
         const giftRef = doc(db, 'giftItems', giftId);
-        await updateDoc(giftRef, { name: newName.trim(), description: newDesc.trim(), url: (newUrl || null) });
+        const updatePayload = { name: newName.trim(), description: newDesc.trim(), url: (newUrl || null), imageUrl: (newImage || null) };
+        if (!newImage && currentImagePath) {
+          updatePayload.imageStoragePath = null;
+        }
+        await updateDoc(giftRef, updatePayload);
       } catch (err) {
         showError(`Failed to update gift: ${err.message}`);
       }
@@ -1128,6 +1267,59 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
     // ===== UTILITY FUNCTIONS =====
     function escapeAttr(str) {
       return String(str).replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+    }
+
+    function openGiftImage(imageUrl, giftName) {
+      if (!imageUrl) return;
+
+      if (!photoLightboxElement || !photoLightboxImageElement) {
+        window.open(imageUrl, '_blank', 'noopener');
+        return;
+      }
+
+      const captionText = giftName || LANGUAGES[currentLanguage]?.viewPhoto || 'View Photo';
+
+      if (photoLightboxCaptionElement) {
+        photoLightboxCaptionElement.dataset.originalCaption = captionText;
+        photoLightboxCaptionElement.textContent = captionText;
+      }
+
+      photoLightboxImageElement.src = '';
+      photoLightboxImageElement.style.display = 'none';
+      photoLightboxImageElement.alt = giftName ? `${giftName} photo` : 'Gift photo';
+      requestAnimationFrame(() => {
+        photoLightboxImageElement.src = imageUrl;
+      });
+
+      photoLightboxElement.classList.add('active');
+      photoLightboxElement.setAttribute('aria-hidden', 'false');
+
+      if (photoLightboxCloseElement) {
+        photoLightboxCloseElement.focus({ preventScroll: true });
+      }
+    }
+
+    function closeGiftImage() {
+      if (!photoLightboxElement) return;
+
+      photoLightboxElement.classList.remove('active');
+      photoLightboxElement.setAttribute('aria-hidden', 'true');
+
+      if (photoLightboxImageElement) {
+        photoLightboxImageElement.src = '';
+        photoLightboxImageElement.alt = '';
+        photoLightboxImageElement.style.display = '';
+      }
+
+      if (photoLightboxCaptionElement) {
+        photoLightboxCaptionElement.textContent = '';
+        delete photoLightboxCaptionElement.dataset.originalCaption;
+      }
+
+      if (lastPhotoTrigger && typeof lastPhotoTrigger.focus === 'function') {
+        lastPhotoTrigger.focus({ preventScroll: true });
+      }
+      lastPhotoTrigger = null;
     }
 
     // Language switching function
@@ -1170,6 +1362,10 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
       // Update all description toggle buttons
       document.querySelectorAll('.desc-toggle-text').forEach(btn => {
         btn.textContent = lang.showDescription;
+      });
+      
+      document.querySelectorAll('.view-photo-btn').forEach(btn => {
+        btn.textContent = lang.viewPhoto;
       });
       
       // Update all gift list titles
@@ -1350,6 +1546,21 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
         giftUrlInput.placeholder = lang.url;
       }
       
+      const giftImageInput = document.getElementById('giftImageInput');
+      if (giftImageInput) {
+        giftImageInput.placeholder = lang.photoUrl;
+      }
+      
+      const giftImageUploadLabel = document.getElementById('giftImageUploadLabel');
+      if (giftImageUploadLabel) {
+        giftImageUploadLabel.textContent = lang.uploadPhoto;
+      }
+      
+      const giftImageFileName = document.getElementById('giftImageFileName');
+      if (giftImageFileName && (!giftImageFileInput || !giftImageFileInput.files || giftImageFileInput.files.length === 0)) {
+        giftImageFileName.textContent = lang.noFileChosen;
+      }
+      
       const addGiftBtn = document.getElementById('addGiftButton');
       if (addGiftBtn) {
         addGiftBtn.textContent = lang.addGift;
@@ -1526,6 +1737,7 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
           
           for (const gift of gifts) {
             const linkHtml = gift.url ? ` <span>${renderGiftLink(gift.url)}</span>` : '';
+          const photoButtonHtml = gift.imageUrl ? `<button type="button" class="view-photo-btn" data-image-url="${escapeAttr(gift.imageUrl)}" data-image-name="${escapeAttr(gift.name)}">${LANGUAGES[currentLanguage].viewPhoto}</button>` : '';
             const hasDescription = gift.description && gift.description.trim();
             const descriptionId = `purchase-desc-${gift.id}`;
             
@@ -1535,6 +1747,7 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
                   <div>
                     <strong>${gift.name}</strong>
                     ${linkHtml}
+                    ${photoButtonHtml}
                   </div>
                   ${hasDescription ? `
                     <div class="description-link" onclick="toggleGiftDescription('${descriptionId}')">
@@ -1728,6 +1941,29 @@ body {
       min-height: 60px;
     }
 
+    .photo-upload-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+
+    .photo-upload-row input[type="file"] {
+      color: #eaf4ea;
+    }
+
+    .file-input-label {
+      font-weight: 600;
+      color: #eaf4ea;
+    }
+
+    .file-input-name {
+      font-size: 0.9em;
+      color: rgba(234, 244, 234, 0.8);
+      font-style: italic;
+    }
+
     /* ===== AUTH TABS ===== */
     .auth-tabs {
       display: flex;
@@ -1751,7 +1987,7 @@ body {
 
     /* ===== BUTTONS ===== */
     #authForm button, #addGiftForm button, #signOutButton, 
-    .view-user-list-btn, .toggle-purchased-btn, .edit-gift-btn, .delete-gift-btn {
+    .view-user-list-btn, .toggle-purchased-btn, .edit-gift-btn, .delete-gift-btn, .view-photo-btn {
       padding: 12px 20px;
       margin-right: 10px;
       border: none;
@@ -1777,9 +2013,10 @@ body {
     .toggle-purchased-btn.unmark { background-color: #dc3545; color: white; font-size: 0.8em; padding: 6px 10px; }
     .edit-gift-btn { background-color: #1976d2; color: white; font-size: 0.8em; padding: 6px 10px; }
     .delete-gift-btn { background-color: #e53935; color: white; font-size: 0.8em; padding: 6px 10px; }
+    .view-photo-btn { background-color: #ff9800; color: white; font-size: 0.8em; padding: 6px 10px; }
 
     #authForm button:hover, #addGiftForm button:hover, #signOutButton:hover, 
-    .view-user-list-btn:hover, .toggle-purchased-btn:hover, .edit-gift-btn:hover, .delete-gift-btn:hover { 
+    .view-user-list-btn:hover, .toggle-purchased-btn:hover, .edit-gift-btn:hover, .delete-gift-btn:hover, .view-photo-btn:hover { 
       opacity: .9; 
     }
 
@@ -2031,6 +2268,72 @@ body {
 
     .unmark-purchase-btn:hover {
       background-color: #c82333;
+    }
+
+    /* ===== GIFT PHOTO LIGHTBOX ===== */
+    .photo-lightbox {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 20000;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+    }
+
+    .photo-lightbox.active {
+      display: flex;
+    }
+
+    .photo-lightbox__content {
+      position: relative;
+      max-width: 90vw;
+      max-height: 90vh;
+      background: rgba(0, 0, 0, 0.85);
+      border-radius: 12px;
+      padding: 20px 24px 24px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .photo-lightbox__content img {
+      max-width: 100%;
+      max-height: 70vh;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    .photo-lightbox__close {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      border: none;
+      border-radius: 9999px;
+      width: 32px;
+      height: 32px;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .photo-lightbox__close:hover {
+      background: rgba(0, 0, 0, 0.75);
+    }
+
+    .photo-lightbox__caption {
+      color: #fff;
+      font-weight: 600;
+      text-align: center;
+      word-break: break-word;
     }
 
     /* ===== LINKS ===== */
@@ -2702,10 +3005,13 @@ document.addEventListener('DOMContentLoaded', function() {
   const christmasMusic = document.getElementById('christmasMusic');
   const musicToggle = document.getElementById('musicToggle');
   
-  // Set volume first
+  // Set initial volume and paused state
   christmasMusic.volume = 0.3; // 30% volume for background music
+  christmasMusic.pause();
+  christmasMusic.currentTime = 0;
   
   let isPlaying = false;
+  musicToggle.textContent = '🎵';
   
   // Music toggle button functionality
   musicToggle.addEventListener('click', function(e) {
@@ -2745,46 +3051,6 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Error details:', christmasMusic.error);
     musicToggle.textContent = '❌';
     alert('Could not load music file. Please check if ChristmasRock.mp3 exists in the same folder as index.html');
-  });
-  
-  // Try multiple approaches to autoplay
-  function tryAutoplay() {
-    // First try to unmute and play
-    christmasMusic.muted = false;
-    christmasMusic.play().then(() => {
-      musicToggle.textContent = '⏸️';
-      isPlaying = true;
-      console.log('Music autoplay successful');
-    }).catch(error => {
-      console.log('Autoplay attempt failed:', error);
-      musicToggle.textContent = '🎵';
-    });
-  }
-  
-  // Try autoplay immediately
-  tryAutoplay();
-  
-  // Try again after short delays
-  setTimeout(tryAutoplay, 100);
-  setTimeout(tryAutoplay, 500);
-  setTimeout(tryAutoplay, 1000);
-  
-  // Try when the page is fully loaded
-  window.addEventListener('load', tryAutoplay);
-  
-  // Try when DOM is ready
-  document.addEventListener('DOMContentLoaded', tryAutoplay);
-  
-  // Try when user first interacts with any element
-  document.addEventListener('click', tryAutoplay, { once: true });
-  document.addEventListener('keydown', tryAutoplay, { once: true });
-  document.addEventListener('touchstart', tryAutoplay, { once: true });
-  
-  // Try when page becomes visible
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) {
-      tryAutoplay();
-    }
   });
   
   // Update button when music ends
@@ -2830,6 +3096,12 @@ document.addEventListener('DOMContentLoaded', function() {
     <input type="text" id="giftNameInput" placeholder="Gift Name" maxlength="20" required>
     <textarea id="giftDescriptionInput" placeholder="Description"></textarea>
     <input type="url" id="giftUrlInput" placeholder="Link to the item (optional)">
+    <input type="url" id="giftImageInput" placeholder="Photo URL (optional)">
+    <div class="photo-upload-row">
+      <label for="giftImageFileInput" id="giftImageUploadLabel" class="file-input-label">Upload Photo (optional)</label>
+      <input type="file" id="giftImageFileInput" accept="image/*">
+      <span id="giftImageFileName" class="file-input-name">No file chosen</span>
+    </div>
     <button type="submit" id="addGiftButton">Add Gift</button>
   </form>
 
@@ -2839,8 +3111,16 @@ document.addEventListener('DOMContentLoaded', function() {
   <div id="myPurchasesContainer"></div>
   </div></div>
   
+  <div id="photoLightbox" class="photo-lightbox" aria-hidden="true">
+    <div class="photo-lightbox__content" role="dialog" aria-modal="true" aria-labelledby="photoLightboxCaption">
+      <button type="button" id="photoLightboxClose" class="photo-lightbox__close" aria-label="Close photo">×</button>
+      <img id="photoLightboxImage" alt="" />
+      <div id="photoLightboxCaption" class="photo-lightbox__caption"></div>
+    </div>
+  </div>
+  
   <!-- Background Christmas Music -->
-  <audio id="christmasMusic" loop autoplay muted>
+  <audio id="christmasMusic" loop>
     <source src="ChristmasRock.mp3" type="audio/mp3">
     Your browser does not support the audio element.
   </audio>
