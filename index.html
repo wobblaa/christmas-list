@@ -63,7 +63,6 @@
         'giftName': 'Gift Name',
         'description': 'Description',
         'url': 'URL (optional)',
-        'photoUrl': 'Photo URL (optional)',
         'uploadPhoto': 'Upload Photo (optional)',
         'noFileChosen': 'No file chosen',
         'uploadingPhoto': 'Uploading photo...',
@@ -132,7 +131,6 @@
         'giftName': 'Nom du Cadeau',
         'description': 'Description',
         'url': 'URL (optionnel)',
-        'photoUrl': 'URL de photo (facultatif)',
         'uploadPhoto': 'Télécharger une photo (facultatif)',
         'noFileChosen': 'Aucun fichier sélectionné',
         'uploadingPhoto': 'Téléchargement de la photo...',
@@ -340,7 +338,7 @@
     // DOM Elements (initialized after DOMContentLoaded) - cached for performance
     let authStatusElement, authStatusTextElement, authFormElement, firstNameInput, emailInput, passwordInput,
         signInButton, signUpButton, signOutButton, tabSignIn, tabSignUp,
-        addGiftForm, giftNameInput, giftDescriptionInput, giftUrlInput, giftImageInput, giftImageFileInput, giftImageFileNameDisplay, giftListDisplayElement,
+        addGiftForm, giftNameInput, giftDescriptionInput, giftUrlInput, giftImageFileInput, giftImageFileNameDisplay, giftListDisplayElement,
         otherUsersListElement, viewOtherUserGiftsContainer, myPurchasesContainer, forgotPasswordLink,
         photoLightboxElement, photoLightboxImageElement, photoLightboxCaptionElement, photoLightboxCloseElement;
 
@@ -372,7 +370,6 @@
       giftNameInput = document.getElementById('giftNameInput');
       giftDescriptionInput = document.getElementById('giftDescriptionInput');
       giftUrlInput = document.getElementById('giftUrlInput');
-      giftImageInput = document.getElementById('giftImageInput');
       giftImageFileInput = document.getElementById('giftImageFileInput');
       giftImageFileNameDisplay = document.getElementById('giftImageFileName');
       giftListDisplayElement = document.getElementById('giftListDisplay');
@@ -718,7 +715,7 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
       const name = giftNameInput.value.trim();
       const description = (giftDescriptionInput?.value || '').trim();
       const url = sanitizeUrl(giftUrlInput?.value || '');
-      let imageUrl = sanitizeUrl(giftImageInput?.value || '');
+      let imageUrl = '';
       const imageFile = giftImageFileInput?.files?.[0] || null;
 
       if (!name) return alert('Please enter a gift name.');
@@ -760,7 +757,6 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
         giftNameInput.value = '';
         if (giftDescriptionInput) giftDescriptionInput.value = '';
         if (giftUrlInput) giftUrlInput.value = '';
-        if (giftImageInput) giftImageInput.value = '';
         if (giftImageFileInput) giftImageFileInput.value = '';
         if (giftImageFileNameDisplay) giftImageFileNameDisplay.textContent = LANGUAGES[currentLanguage]?.noFileChosen || 'No file chosen';
       } catch (error) {
@@ -1549,11 +1545,6 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
       const giftUrlInput = document.getElementById('giftUrlInput');
       if (giftUrlInput) {
         giftUrlInput.placeholder = lang.url;
-      }
-      
-      const giftImageInput = document.getElementById('giftImageInput');
-      if (giftImageInput) {
-        giftImageInput.placeholder = lang.photoUrl;
       }
       
       const giftImageUploadLabel = document.getElementById('giftImageUploadLabel');
@@ -3101,7 +3092,6 @@ document.addEventListener('DOMContentLoaded', function() {
     <input type="text" id="giftNameInput" placeholder="Gift Name" maxlength="20" required>
     <textarea id="giftDescriptionInput" placeholder="Description"></textarea>
     <input type="url" id="giftUrlInput" placeholder="Link to the item (optional)">
-    <input type="url" id="giftImageInput" placeholder="Photo URL (optional)">
     <div class="photo-upload-row">
       <label for="giftImageFileInput" id="giftImageUploadLabel" class="file-input-label">Upload Photo (optional)</label>
       <input type="file" id="giftImageFileInput" accept="image/*">
