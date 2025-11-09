@@ -14,9 +14,6 @@
       getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
       onAuthStateChanged, signOut, sendPasswordResetEmail
     } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
-    import {
-      getStorage, ref as storageRef, uploadBytes, getDownloadURL
-    } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-storage.js";
 
      // --- Firebase config (yours) ---
     const firebaseConfig = {
@@ -30,8 +27,11 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const storage = getStorage(app);
     const auth = getAuth(app);
+
+    const CLOUDINARY_CLOUD_NAME = 'dyz3r9mmg';
+    const CLOUDINARY_UPLOAD_PRESET = 'gift_photos';
+    const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`;
 
     // ===== LANGUAGE DATA =====
     const LANGUAGES = {
@@ -628,16 +628,31 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
       if (!/^https?:\/\//i.test(url)) return "https://" + url; // add protocol if missing
       return url;
     }
-    function sanitizeFileName(name) {
-      return (name || 'photo')
-        .replace(/[^a-zA-Z0-9._-]+/g, '_')
-        .replace(/_+/g, '_')
-        .replace(/^_+|_+$/g, '')
-        .slice(-60) || 'photo';
-    }
     function truncateFileName(name) {
       if (!name) return '';
       return name.length > 30 ? name.slice(0, 12) + '…' + name.slice(-12) : name;
+    }
+    async function uploadGiftPhotoToCloudinary(file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      formData.append('folder', 'family-gift-list');
+
+      const response = await fetch(CLOUDINARY_UPLOAD_URL, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        throw new Error(`Cloudinary upload failed: ${response.status} ${errorText}`);
+      }
+
+      const data = await response.json();
+      if (!data || !data.secure_url) {
+        throw new Error('Cloudinary did not return a secure_url.');
+      }
+      return data.secure_url;
     }
     function displayUrlText(u) {
       try {
@@ -704,7 +719,6 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
       const description = (giftDescriptionInput?.value || '').trim();
       const url = sanitizeUrl(giftUrlInput?.value || '');
       let imageUrl = sanitizeUrl(giftImageInput?.value || '');
-      let imageStoragePath = null;
       const imageFile = giftImageFileInput?.files?.[0] || null;
 
       if (!name) return alert('Please enter a gift name.');
@@ -714,14 +728,11 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
           alert((LANGUAGES[currentLanguage]?.photoTooLarge || 'Photo is too large (max 5 MB).').replace('{max}', '5 MB'));
           return;
         }
+        if (giftImageFileNameDisplay) {
+          giftImageFileNameDisplay.textContent = LANGUAGES[currentLanguage]?.uploadingPhoto || 'Uploading photo...';
+        }
         try {
-          if (giftImageFileNameDisplay) {
-            giftImageFileNameDisplay.textContent = LANGUAGES[currentLanguage]?.uploadingPhoto || 'Uploading photo...';
-          }
-          imageStoragePath = `giftPhotos/${currentUserUid}/${Date.now()}_${sanitizeFileName(imageFile.name)}`;
-          const photoRef = storageRef(storage, imageStoragePath);
-          await uploadBytes(photoRef, imageFile);
-          imageUrl = await getDownloadURL(photoRef);
+          imageUrl = await uploadGiftPhotoToCloudinary(imageFile);
         } catch (uploadError) {
           console.error('Photo upload failed:', uploadError);
           alert(LANGUAGES[currentLanguage]?.photoUploadFailed || 'Failed to upload photo. Please try again.');
@@ -739,7 +750,6 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
           description,
           url: url || null,
           imageUrl: imageUrl || null,
-          imageStoragePath: imageStoragePath || null,
           listOwnerId: currentUserUid,
           isPurchased: false,
           purchasedByUid: null,
@@ -811,7 +821,7 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
                 </div>
                 <div style="margin-top:6px; display:flex; gap:3px; flex-wrap:wrap; align-items:center;">
                   ${photoButtonHtml}
-                  <button class="edit-gift-btn" data-id="${g.id}" data-name="${escapeAttr(g.name)}" data-desc="${escapeAttr(g.description || '')}" data-url="${escapeAttr(g.url || '')}" data-image="${escapeAttr(g.imageUrl || '')}" data-image-path="${escapeAttr(g.imageStoragePath || '')}" style="margin-right: -2px;">${LANGUAGES[currentLanguage].edit}</button>
+                  <button class="edit-gift-btn" data-id="${g.id}" data-name="${escapeAttr(g.name)}" data-desc="${escapeAttr(g.description || '')}" data-url="${escapeAttr(g.url || '')}" data-image="${escapeAttr(g.imageUrl || '')}" style="margin-right: -2px;">${LANGUAGES[currentLanguage].edit}</button>
                   <button class="delete-gift-btn" data-id="${g.id}">${LANGUAGES[currentLanguage].remove}</button>
                 </div>
               </li>
@@ -831,8 +841,7 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
               const curDesc = e.currentTarget.dataset.desc || '';
               const curUrl = e.currentTarget.dataset.url || '';
               const curImage = e.currentTarget.dataset.image || '';
-              const curImagePath = e.currentTarget.dataset.imagePath || '';
-              await editGift(id, curName, curDesc, curUrl, curImage, curImagePath);
+              await editGift(id, curName, curDesc, curUrl, curImage);
             });
           });
 
@@ -1235,7 +1244,7 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
     }
 
     // ===== GIFT EDIT/DELETE FUNCTIONS =====
-    async function editGift(giftId, currentName, currentDesc, currentUrl, currentImage, currentImagePath) {
+    async function editGift(giftId, currentName, currentDesc, currentUrl, currentImage) {
       const newName = prompt('Edit gift name:', currentName) ?? currentName;
       if (!newName.trim()) return alert('Gift name cannot be empty.');
       const newDesc = prompt('Edit description (optional):', currentDesc ?? '') ?? currentDesc ?? '';
@@ -1245,11 +1254,7 @@ authStatusTextElement.textContent = `${LANGUAGES[currentLanguage].signedInAs} ${
       const newImage = sanitizeUrl(newImageRaw);
       try {
         const giftRef = doc(db, 'giftItems', giftId);
-        const updatePayload = { name: newName.trim(), description: newDesc.trim(), url: (newUrl || null), imageUrl: (newImage || null) };
-        if (!newImage && currentImagePath) {
-          updatePayload.imageStoragePath = null;
-        }
-        await updateDoc(giftRef, updatePayload);
+        await updateDoc(giftRef, { name: newName.trim(), description: newDesc.trim(), url: (newUrl || null), imageUrl: (newImage || null) });
       } catch (err) {
         showError(`Failed to update gift: ${err.message}`);
       }
